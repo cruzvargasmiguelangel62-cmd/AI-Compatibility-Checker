@@ -74,7 +74,11 @@ class App(ctk.CTk):
         self.main_container = ctk.CTkFrame(self, corner_radius=0, fg_color=self.bg_color)
         self.main_container.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         self.main_container.grid_columnconfigure(0, weight=1)
-        self.main_container.grid_rowconfigure(2, weight=1) # The scrollable models list
+        self.main_container.grid_rowconfigure(3, weight=1) # The scrollable models list (now on row 3)
+        
+        # Recommendations Frame
+        self.rec_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        self.rec_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         
         self.build_main_header()
         self.build_model_list_section()
@@ -226,7 +230,7 @@ class App(ctk.CTk):
             text=value, 
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             text_color=self.text_primary,
-            wraplength=270,
+            wraplength=210,
             justify="left"
         )
         val_label.grid(row=1, column=0, sticky="w", padx=12, pady=(2, 6))
@@ -274,9 +278,9 @@ class App(ctk.CTk):
         )
         self.main_desc.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-        # Filter & Search controls frame
+        # Filter & Search controls frame (moved to row 2)
         self.control_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
-        self.control_frame.grid(row=1, column=0, sticky="ew", pady=(10, 15))
+        self.control_frame.grid(row=2, column=0, sticky="ew", pady=(10, 15))
         self.control_frame.grid_columnconfigure(0, weight=1)
         self.control_frame.grid_columnconfigure(1, weight=0)
         
@@ -320,10 +324,11 @@ class App(ctk.CTk):
             scrollbar_button_color="#1E293B",
             scrollbar_button_hover_color="#3B82F6"
         )
-        self.scroll_frame.grid(row=2, column=0, sticky="nsew", pady=5)
+        # Moved to row 3
+        self.scroll_frame.grid(row=3, column=0, sticky="nsew", pady=5)
         self.scroll_frame._scrollbar.configure(width=8, corner_radius=4)
         
-        # Instructions/Summary banner underneath or in sidebar
+        # Instructions/Summary banner underneath or in sidebar (moved to row 4)
         self.guide_frame = ctk.CTkFrame(
             self.main_container, 
             fg_color="#1E1E2F", 
@@ -331,7 +336,7 @@ class App(ctk.CTk):
             border_width=1, 
             corner_radius=10
         )
-        self.guide_frame.grid(row=3, column=0, sticky="ew", pady=(15, 0))
+        self.guide_frame.grid(row=4, column=0, sticky="ew", pady=(15, 0))
         self.guide_frame.grid_columnconfigure(0, weight=1)
         
         guide_text = (
@@ -392,6 +397,75 @@ class App(ctk.CTk):
         # Extract hardware and software from specs dictionary
         hw_specs = self.specs.get("hardware", self.specs)
         sw_specs = self.specs.get("software", {})
+        
+        # Clear previous recommendations and render new ones
+        for child in self.rec_frame.winfo_children():
+            child.destroy()
+            
+        recs = [m for m in self.rated_models if m.get("recommended")]
+        if recs:
+            rec_title = ctk.CTkLabel(
+                self.rec_frame,
+                text="🏆 MODELOS TOP RECOMENDADOS PARA TU PC",
+                font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+                text_color="#F59E0B"
+            )
+            rec_title.pack(anchor="w", pady=(0, 6))
+            
+            cards_container = ctk.CTkFrame(self.rec_frame, fg_color="transparent")
+            cards_container.pack(fill="x")
+            
+            for col_idx, r_model in enumerate(recs[:4]):
+                cards_container.grid_columnconfigure(col_idx, weight=1, uniform="rec_cards")
+                
+                # Check status color
+                r_status = r_model["status"]
+                bg_c = "#1E1B4B" if r_status == "RUNS_GREAT" else "#1E293B" if r_status == "RUNS_WELL" else "#111827"
+                bd_c = "#312E81" if r_status == "RUNS_GREAT" else "#334155" if r_status == "RUNS_WELL" else "#1F2937"
+                
+                card = ctk.CTkFrame(
+                    cards_container,
+                    fg_color=bg_c,
+                    border_color=bd_c,
+                    border_width=2 if r_status in ["RUNS_GREAT", "RUNS_WELL"] else 1,
+                    corner_radius=10,
+                    height=95
+                )
+                card.grid(row=0, column=col_idx, padx=4, sticky="nsew")
+                card.grid_propagate(False)
+                
+                # Category label
+                r_cat = ctk.CTkLabel(
+                    card,
+                    text=r_model["category"].upper(),
+                    font=ctk.CTkFont(family="Segoe UI", size=9, weight="bold"),
+                    text_color="#818CF8" if r_status == "RUNS_GREAT" else "#9CA3AF"
+                )
+                r_cat.pack(anchor="w", padx=10, pady=(6, 0))
+                
+                # Model Name
+                r_name = ctk.CTkLabel(
+                    card,
+                    text=r_model["name"],
+                    font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+                    text_color=self.text_primary,
+                    wraplength=125,
+                    justify="left"
+                )
+                r_name.pack(anchor="w", padx=10, pady=(0, 2))
+                
+                # Status Badge
+                r_badge = ctk.CTkLabel(
+                    card,
+                    text=r_model["status_label"].upper(),
+                    font=ctk.CTkFont(family="Segoe UI", size=8, weight="bold"),
+                    text_color=self.text_primary,
+                    fg_color=r_model["color"],
+                    corner_radius=4,
+                    height=18,
+                    width=110
+                )
+                r_badge.pack(anchor="w", padx=10, pady=(2, 6))
         
         # 1. Update OS Info
         os_pretty = hw_specs.get("os_pretty", f"{hw_specs.get('os')} {hw_specs.get('os_release')}")
@@ -526,12 +600,16 @@ class App(ctk.CTk):
             self.create_model_row(self.scroll_frame, model)
 
     def create_model_row(self, parent, model):
+        is_rec = model.get("recommended", False)
+        border_c = "#3B82F6" if is_rec else self.border_color
+        border_w = 2 if is_rec else 1
+        
         # Row Frame
         row = ctk.CTkFrame(
             parent,
             fg_color=self.card_color,
-            border_color=self.border_color,
-            border_width=1,
+            border_color=border_c,
+            border_width=border_w,
             corner_radius=10
         )
         row.pack(fill="x", pady=6, ipady=4)
@@ -544,7 +622,7 @@ class App(ctk.CTk):
         def on_enter(e):
             row.configure(border_color=self.hover_color)
         def on_leave(e):
-            row.configure(border_color=self.border_color)
+            row.configure(border_color=border_c)
             
         row.bind("<Enter>", on_enter)
         row.bind("<Leave>", on_leave)
@@ -552,6 +630,15 @@ class App(ctk.CTk):
         # ------------------ COL 0: INFO ------------------
         info_frame = ctk.CTkFrame(row, fg_color="transparent")
         info_frame.grid(row=0, column=0, sticky="w", padx=15, pady=12)
+        
+        if is_rec:
+            rec_badge = ctk.CTkLabel(
+                info_frame,
+                text="✨ RECOMENDADO PARA TU PC",
+                font=ctk.CTkFont(family="Segoe UI", size=9, weight="bold"),
+                text_color="#F59E0B"
+            )
+            rec_badge.pack(anchor="w", pady=(0, 2))
         
         m_name = ctk.CTkLabel(
             info_frame, 
@@ -579,7 +666,7 @@ class App(ctk.CTk):
             text=model["description"],
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color="#9CA3AF",
-            wraplength=350,
+            wraplength=280,
             justify="left"
         )
         m_desc.pack(anchor="w")
@@ -629,7 +716,7 @@ class App(ctk.CTk):
             text=model["details"],
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=self.text_primary,
-            wraplength=380,
+            wraplength=290,
             justify="left"
         )
         m_details.pack(anchor="w")
@@ -643,7 +730,7 @@ class App(ctk.CTk):
                 text=model["os_tip"],
                 font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"),
                 text_color="#34D399", # Green highlight for tip
-                wraplength=380,
+                wraplength=290,
                 justify="left"
             )
             m_tip.pack(anchor="w", pady=(4, 0))

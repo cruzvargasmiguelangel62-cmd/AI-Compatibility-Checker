@@ -193,4 +193,35 @@ def evaluate_compatibility(specs):
             "os_tip": os_tip
         })
         
+    # Select recommended models (Top 3-4 models that are ideal for the system)
+    # Filter to compatible models (RUNS_GREAT or RUNS_WELL)
+    compatible_llms = [m for m in rated_models if m["category"] == "Text (LLM)" and m["status"] in ["RUNS_GREAT", "RUNS_WELL"]]
+    compatible_imgs = [m for m in rated_models if m["category"] == "Image Generation" and m["status"] in ["RUNS_GREAT", "RUNS_WELL"]]
+    
+    # Fallback if no models are RUNS_GREAT/WELL: try DECENT_SLOW, then TIGHT_FIT
+    if not compatible_llms:
+        compatible_llms = [m for m in rated_models if m["category"] == "Text (LLM)" and m["status"] == "DECENT_SLOW"]
+    if not compatible_llms:
+        compatible_llms = [m for m in rated_models if m["category"] == "Text (LLM)" and m["status"] == "TIGHT_FIT"]
+        
+    if not compatible_imgs:
+        compatible_imgs = [m for m in rated_models if m["category"] == "Image Generation" and m["status"] == "DECENT_SLOW"]
+    if not compatible_imgs:
+        compatible_imgs = [m for m in rated_models if m["category"] == "Image Generation" and m["status"] == "TIGHT_FIT"]
+        
+    # Sort compatible models by requirements/capabilities (larger models first, as they have higher quality)
+    compatible_llms.sort(key=lambda x: x["vram_q4"], reverse=True)
+    compatible_imgs.sort(key=lambda x: x["vram_q4"], reverse=True)
+    
+    recommended_ids = set()
+    # Recommend top 2 LLMs and top 2 Image models (up to 4 total)
+    for m in compatible_llms[:2]:
+        recommended_ids.add(m["id"])
+    for m in compatible_imgs[:2]:
+        recommended_ids.add(m["id"])
+        
+    # Mark models in the rated list
+    for m in rated_models:
+        m["recommended"] = m["id"] in recommended_ids
+        
     return rated_models, is_online
