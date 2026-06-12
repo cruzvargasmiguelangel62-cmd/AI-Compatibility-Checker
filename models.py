@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import json
 import config
+
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.abspath(__file__))
 
 # Load models database dynamically from remote URL with local fallback
 # Updates local models.json automatically on successful download
 def load_models_data():
     import urllib.request
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = get_base_dir()
     local_json_path = os.path.join(current_dir, "models.json")
     
     url = config.ONLINE_MODELS_URL

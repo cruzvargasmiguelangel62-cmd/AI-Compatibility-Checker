@@ -16,7 +16,14 @@ def load_env(file_path):
     return env_vars
 
 # Determine paths
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+import sys
+
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.abspath(__file__))
+
+CURRENT_DIR = get_base_dir()
 ENV_PATH = os.path.join(CURRENT_DIR, ".env")
 
 # Load variables
