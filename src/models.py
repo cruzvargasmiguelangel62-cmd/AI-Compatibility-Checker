@@ -16,7 +16,7 @@ def get_base_dir():
 def load_models_data():
     import urllib.request
     current_dir = get_base_dir()
-    local_json_path = os.path.join(current_dir, "models.json")
+    local_json_path = os.path.join(current_dir, "data", "models.json")
     
     url = config.ONLINE_MODELS_URL
     try:
@@ -49,7 +49,7 @@ def load_models_data():
         
     # Secondary fallback to local models_online.json if models.json has issues
     try:
-        local_online_path = os.path.join(current_dir, "models_online.json")
+        local_online_path = os.path.join(current_dir, "data", "models_online.json")
         if os.path.exists(local_online_path):
             with open(local_online_path, "r", encoding="utf-8") as f:
                 return json.load(f), False
