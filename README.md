@@ -72,4 +72,13 @@ Consulte el archivo `.env.example` para ver la lista completa de umbrales de mem
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT.
+Este proyecto está bajo la **Licencia MIT**. Consulta el archivo [LICENSE](file:///c:/Users/MQerKAcademy/Desktop/proyectos/detector%20ia/LICENSE) para ver los términos legales completos.
+
+### Resumen de la licencia:
+- **Uso Comercial**: Puedes usar este software con fines comerciales.
+- **Modificación**: Puedes modificar el código fuente libremente.
+- **Distribución**: Puedes distribuir copias del software y sus modificaciones.
+- **Uso Privado**: Puedes usar el software de forma privada.
+- **Sin Garantía**: El software se proporciona "tal cual", sin garantías de ningún tipo.
+- **Atribución**: Se debe incluir el aviso de copyright y este aviso de permiso en todas las copias o partes sustanciales del software.
+
