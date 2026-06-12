@@ -53,10 +53,21 @@ class App(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)              # Models browser
         self.grid_rowconfigure(0, weight=1)
         
-        # Sidebar Frame (Specs)
-        self.sidebar = ctk.CTkFrame(self, width=320, corner_radius=0, fg_color="#0D111C", border_color="#1E293B", border_width=1)
+        # Sidebar Frame (Specs) - Scrollable to fit all screens dynamically
+        self.sidebar = ctk.CTkScrollableFrame(
+            self, 
+            width=280, 
+            corner_radius=0, 
+            fg_color="#0D111C", 
+            border_color="#1E293B",
+            border_width=1,
+            scrollbar_fg_color="transparent",
+            scrollbar_button_color="#1E293B",
+            scrollbar_button_hover_color="#3B82F6",
+            label_text=""
+        )
+        self.sidebar._scrollbar.configure(width=8, corner_radius=4)
         self.sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-        self.sidebar.grid_propagate(False)
         self.build_sidebar()
         
         # Main Frame (Models)
@@ -117,7 +128,7 @@ class App(ctk.CTk):
 
         # Action Buttons Frame
         self.sidebar_buttons = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        self.sidebar_buttons.pack(fill="x", side="bottom", padx=20, pady=20)
+        self.sidebar_buttons.pack(fill="x", padx=20, pady=(15, 20))
         
         # Database Mode Label
         self.mode_label = ctk.CTkLabel(
@@ -265,9 +276,13 @@ class App(ctk.CTk):
             self.main_container, 
             fg_color="transparent", 
             label_text="", 
-            corner_radius=0
+            corner_radius=0,
+            scrollbar_fg_color="transparent",
+            scrollbar_button_color="#1E293B",
+            scrollbar_button_hover_color="#3B82F6"
         )
         self.scroll_frame.grid(row=2, column=0, sticky="nsew", pady=5)
+        self.scroll_frame._scrollbar.configure(width=8, corner_radius=4)
         
         # Instructions/Summary banner underneath or in sidebar
         self.guide_frame = ctk.CTkFrame(
