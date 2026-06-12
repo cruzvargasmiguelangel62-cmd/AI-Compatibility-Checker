@@ -4,48 +4,52 @@ import os
 import json
 import config
 
-# Load models database dynamically from models.json or remote URL
-def load_models_data(online=False):
-    if not online:
-        try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            json_path = os.path.join(current_dir, "models.json")
-            with open(json_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading models.json: {e}")
-            return []
-    else:
-        import urllib.request
-        url = config.ONLINE_MODELS_URL
-        try:
-            req = urllib.request.Request(
-                url,
-                headers={'User-Agent': 'Mozilla/5.0'}
-            )
-            with urllib.request.urlopen(req, timeout=5) as response:
-                return json.loads(response.read().decode('utf-8'))
-        except Exception as e:
-            print(f"Error fetching online models from {url}: {e}")
-            # Fallback to local models_online.json
-            try:
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                local_online_path = os.path.join(current_dir, "models_online.json")
-                if os.path.exists(local_online_path):
-                    with open(local_online_path, "r", encoding="utf-8") as f:
-                        return json.load(f)
-            except Exception as e2:
-                print(f"Error loading local models_online.json fallback: {e2}")
-            
-            # If everything else fails, return local models.json
-            try:
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                json_path = os.path.join(current_dir, "models.json")
-                with open(json_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                pass
-            return []
+# Load models database dynamically from remote URL with local fallback
+# Updates local models.json automatically on successful download
+def load_models_data():
+    import urllib.request
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    local_json_path = os.path.join(current_dir, "models.json")
+    
+    url = config.ONLINE_MODELS_URL
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        # 3 seconds timeout to keep startup and scan fast
+        with urllib.request.urlopen(req, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if isinstance(data, list) and len(data) > 0:
+                # Successfully loaded. Save it to local models.json to update it!
+                try:
+                    with open(local_json_path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                    print("Offline database updated successfully from online source.")
+                except Exception as save_err:
+                    print(f"Failed to update offline database locally: {save_err}")
+                return data, True
+    except Exception as e:
+        print(f"Error fetching online models from {url}: {e}. Falling back to offline database.")
+    
+    # Offline fallback (loads the local models.json which might have been updated previously)
+    try:
+        if os.path.exists(local_json_path):
+            with open(local_json_path, "r", encoding="utf-8") as f:
+                return json.load(f), False
+    except Exception as e:
+        print(f"Error loading offline models.json: {e}")
+        
+    # Secondary fallback to local models_online.json if models.json has issues
+    try:
+        local_online_path = os.path.join(current_dir, "models_online.json")
+        if os.path.exists(local_online_path):
+            with open(local_online_path, "r", encoding="utf-8") as f:
+                return json.load(f), False
+    except Exception:
+        pass
+        
+    return [], False
 
 TIER_COLORS = {
     "RUNS_GREAT": "#10B981", # Emerald Green
@@ -63,7 +67,7 @@ TIER_LABELS = {
     "TOO_HEAVY": "Demasiado Pesado"
 }
 
-def evaluate_compatibility(specs, online=False):
+def evaluate_compatibility(specs):
     total_ram = specs["ram"]
     is_apple_silicon = specs["is_apple_silicon"]
     system_os = specs["os"] # 'Windows', 'Linux', 'Darwin'
@@ -85,7 +89,7 @@ def evaluate_compatibility(specs, online=False):
             has_discrete_gpu = True
 
     rated_models = []
-    models_db = load_models_data(online)
+    models_db, is_online = load_models_data()
     for model in models_db:
         vram_needed = model["vram_q4"]
         ram_needed = model["ram_q4"]
@@ -186,4 +190,4 @@ def evaluate_compatibility(specs, online=False):
             "os_tip": os_tip
         })
         
-    return rated_models
+    return rated_models, is_online

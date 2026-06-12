@@ -130,26 +130,32 @@ class App(ctk.CTk):
         self.sidebar_buttons = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.sidebar_buttons.pack(fill="x", padx=20, pady=(15, 20))
         
-        # Database Mode Label
-        self.mode_label = ctk.CTkLabel(
+        # Database Mode Status Card
+        self.db_status_card = ctk.CTkFrame(
             self.sidebar_buttons,
-            text="BASE DE DATOS DE MODELOS",
-            font=ctk.CTkFont(family="Segoe UI", size=10, weight="bold"),
-            text_color=self.text_muted
+            fg_color=self.card_color,
+            border_color=self.border_color,
+            border_width=1,
+            corner_radius=8,
+            height=38
         )
-        self.mode_label.pack(anchor="w", padx=2, pady=(0, 4))
+        self.db_status_card.pack(fill="x", pady=(0, 15))
         
-        # Database Mode Selector
-        self.mode_selector = ctk.CTkSegmentedButton(
-            self.sidebar_buttons,
-            values=["Offline (Local)", "Online (Remoto)"],
-            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-            height=34,
-            corner_radius=6,
-            command=self.on_mode_change
+        self.db_status_dot = ctk.CTkLabel(
+            self.db_status_card,
+            text="●",
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
+            text_color="#F97316"
         )
-        self.mode_selector.pack(fill="x", pady=(0, 15))
-        self.mode_selector.set("Offline (Local)")
+        self.db_status_dot.pack(side="left", padx=(12, 5))
+        
+        self.db_status_label = ctk.CTkLabel(
+            self.db_status_card,
+            text="Base de Datos: Buscando...",
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            text_color=self.text_primary
+        )
+        self.db_status_label.pack(side="left", padx=5)
         
         self.rescan_btn = ctk.CTkButton(
             self.sidebar_buttons, 
@@ -163,10 +169,6 @@ class App(ctk.CTk):
             command=self.start_scan_thread
         )
         self.rescan_btn.pack(fill="x", pady=0)
-
-    def on_mode_change(self, mode):
-        self.online_mode = (mode == "Online (Remoto)")
-        self.start_scan_thread()
 
     def create_spec_card(self, parent, category, value, icon):
         card = ctk.CTkFrame(parent, fg_color=self.card_color, border_color=self.border_color, border_width=1, corner_radius=10)
@@ -315,7 +317,9 @@ class App(ctk.CTk):
     def start_scan_thread(self):
         # Update UI to scanning state
         self.rescan_btn.configure(state="disabled", text="⌛ Escaneando...")
-        self.scan_status_label.configure(text="Escanenado hardware del sistema...", text_color="#3B82F6")
+        self.scan_status_label.configure(text="Escaneando hardware del sistema...", text_color="#3B82F6")
+        self.db_status_dot.configure(text_color="#F97316")
+        self.db_status_label.configure(text="Base de Datos: Buscando...")
         
         # Run scan in thread so window doesn't freeze
         t = threading.Thread(target=self.perform_scan)
@@ -325,7 +329,7 @@ class App(ctk.CTk):
     def perform_scan(self):
         try:
             self.specs = detect_system()
-            self.rated_models = evaluate_compatibility(self.specs, online=self.online_mode)
+            self.rated_models, self.online_mode = evaluate_compatibility(self.specs)
             self.after(0, self.update_scan_results)
         except Exception as e:
             self.after(0, lambda: self.show_scan_error(e))
@@ -339,6 +343,14 @@ class App(ctk.CTk):
         # Enable rescan button
         self.rescan_btn.configure(state="normal", text="🔄 Volver a Escanear")
         self.scan_status_label.configure(text="Hardware detectado correctamente", text_color="#10B981")
+        
+        # Update DB status indicator
+        if self.online_mode:
+            self.db_status_dot.configure(text_color="#10B981")
+            self.db_status_label.configure(text="Base de Datos: Online (Sincronizada)")
+        else:
+            self.db_status_dot.configure(text_color="#F59E0B")
+            self.db_status_label.configure(text="Base de Datos: Offline (Local)")
         
         # 1. Update OS Info
         os_pretty = self.specs.get("os_pretty", f"{self.specs['os']} {self.specs['os_release']}")
@@ -488,7 +500,7 @@ class App(ctk.CTk):
 
         # ------------------ COL 1: STATUS BADGE ------------------
         badge_frame = ctk.CTkFrame(row, fg_color="transparent")
-        badge_frame.grid(row=0, column=1, sticky="c", padx=10, pady=12)
+        badge_frame.grid(row=0, column=1, padx=10, pady=12)
         
         badge_color = model["color"]
         badge = ctk.CTkLabel(
