@@ -7,8 +7,8 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 # Import our custom modules
-from detector import detect_system
-from models import evaluate_compatibility
+from src.detector import detect_system
+from src.models import evaluate_compatibility
 
 class App(ctk.CTk):
     def __init__(self):
@@ -20,7 +20,7 @@ class App(ctk.CTk):
         self.minsize(1000, 580)
         
         # Appearance from config
-        import config
+        from src import config
         ctk.set_appearance_mode(config.APP_THEME)
         ctk.set_default_color_theme(config.APP_COLOR_THEME)
         

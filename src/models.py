@@ -3,12 +3,13 @@
 import os
 import sys
 import json
-import config
+from . import config
 
 def get_base_dir():
     if getattr(sys, 'frozen', False):
         return os.path.dirname(os.path.abspath(sys.executable))
-    return os.path.dirname(os.path.abspath(__file__))
+    # One level up from src/models.py
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Load models database dynamically from remote URL with local fallback
 # Updates local models.json automatically on successful download
