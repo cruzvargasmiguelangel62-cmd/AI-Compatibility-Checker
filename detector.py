@@ -3,6 +3,64 @@ import platform
 import subprocess
 import json
 import re
+import shutil
+
+_windows_sys_info_cache = None
+
+def _query_windows_system_info():
+    global _windows_sys_info_cache
+    if _windows_sys_info_cache is not None:
+        return _windows_sys_info_cache
+        
+    info = {"ram": None, "gpus": []}
+    try:
+        # Run a single PowerShell process to fetch both RAM and GPUs (takes ~1.0s instead of ~4s for multiple calls)
+        cmd = [
+            "powershell",
+            "-Command",
+            "$ram = Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum | Select-Object -ExpandProperty Sum; "
+            "$gpus = Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json -Compress; "
+            "Write-Output \"$ram===$gpus\""
+        ]
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
+        if "===" in out:
+            parts = out.split("===", 1)
+            ram_str = parts[0].strip()
+            if ram_str.isdigit():
+                info["ram"] = round(float(ram_str) / (1024.0 ** 3), 1)
+                
+            gpus_str = parts[1].strip()
+            if gpus_str:
+                data = json.loads(gpus_str)
+                if not isinstance(data, list):
+                    data = [data]
+                for item in data:
+                    name = item.get("Name", "")
+                    if not name:
+                        continue
+                    raw_vram = item.get("AdapterRAM")
+                    vram_gb = 0.0
+                    if raw_vram is not None:
+                        try:
+                            vram_bytes = int(raw_vram)
+                            if vram_bytes < 0:
+                                vram_bytes += 2**32
+                            vram_gb = round(vram_bytes / (1024.0 ** 3), 1)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    name_upper = name.upper()
+                    vendor = "NVIDIA" if "NVIDIA" in name_upper else "AMD" if "AMD" in name_upper or "RADEON" in name_upper else "Intel" if "INTEL" in name_upper else "Other"
+                    info["gpus"].append({
+                        "name": name,
+                        "vram": vram_gb if vram_gb > 0 else 0.0,
+                        "vendor": vendor
+                    })
+    except Exception as e:
+        print(f"Error querying Windows system info: {e}")
+        
+    _windows_sys_info_cache = info
+    return info
 
 def get_cpu_name():
     system = platform.system()
@@ -71,48 +129,11 @@ def get_windows_gpus():
     except Exception:
         pass
 
-    # 2. PowerShell query para GPUs generales (AMD, Intel)
+    # 2. Usar consulta unificada para GPUs generales (AMD, Intel)
     try:
-        cmd = 'powershell -Command "Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"'
-        out = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode()
-        if out.strip():
-            data = json.loads(out)
-            if not isinstance(data, list):
-                data = [data]
-            
-            for item in data:
-                name = item.get("Name", "")
-                if not name:
-                    continue
-                
-                raw_vram = item.get("AdapterRAM")
-                vram_gb = 0.0
-                if raw_vram is not None:
-                    try:
-                        vram_bytes = int(raw_vram)
-                        # WMI a veces devuelve negativos para VRAM > 4GB por límite de 32-bits
-                        if vram_bytes < 0:
-                            vram_bytes += 2**32
-                        vram_gb = round(vram_bytes / (1024.0 ** 3), 1)
-                    except (ValueError, TypeError):
-                        pass
-                
-                name_upper = name.upper()
-                vendor = "Other"
-                if "NVIDIA" in name_upper:
-                    vendor = "NVIDIA"
-                elif "AMD" in name_upper or "RADEON" in name_upper:
-                    vendor = "AMD"
-                elif "INTEL" in name_upper:
-                    vendor = "Intel"
-                
-                gpus.append({
-                    "name": name,
-                    "vram": vram_gb if vram_gb > 0 else 0.0,
-                    "vendor": vendor
-                })
-            if gpus:
-                return gpus
+        info = _query_windows_system_info()
+        if info["gpus"]:
+            return info["gpus"]
     except Exception:
         pass
 
@@ -253,10 +274,8 @@ def get_installed_ram():
     system = platform.system()
     try:
         if system == "Windows":
-            cmd = 'powershell -Command "Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum | Select-Object -ExpandProperty Sum"'
-            out = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode().strip()
-            if out:
-                return round(float(out) / (1024.0 ** 3), 1)
+            info = _query_windows_system_info()
+            return info["ram"]
         elif system == "Darwin":
             out = subprocess.check_output(["sysctl", "-n", "hw.memsize"]).decode().strip()
             if out:
@@ -269,10 +288,19 @@ def get_os_pretty_name():
     system = platform.system()
     try:
         if system == "Windows":
-            cmd = 'powershell -Command "Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption"'
-            out = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode().strip()
-            if out:
-                return out
+            # Registry query is extremely fast (takes < 1ms)
+            import winreg
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+                product_name = winreg.QueryValueEx(key, "ProductName")[0]
+                build = int(winreg.QueryValueEx(key, "CurrentBuild")[0])
+                winreg.CloseKey(key)
+                
+                if "Windows 10" in product_name and build >= 22000:
+                    product_name = product_name.replace("Windows 10", "Windows 11")
+                return product_name
+            except Exception:
+                pass
             
             release = platform.release()
             ver = platform.version()
@@ -295,6 +323,9 @@ def get_os_pretty_name():
     return f"{system} {platform.release()}"
 
 def detect_system():
+    global _windows_sys_info_cache
+    _windows_sys_info_cache = None  # Reset cache to force fresh lookup
+    
     # Importar psutil dentro de la función para evitar fallos si el entorno virtual no está listo
     import psutil
     
