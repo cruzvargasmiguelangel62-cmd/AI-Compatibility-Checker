@@ -41,6 +41,44 @@ class App(ctk.CTk):
         self.search_query = ""
         self.online_mode = False
 
+        # Mapping model IDs to Ollama tags and download URLs
+        self.model_mapping = {
+            # Text (LLMs) -> Ollama tags
+            "deepseek_r1_1.5b": ("ollama", "deepseek-r1:1.5b"),
+            "deepseek_r1_8b": ("ollama", "deepseek-r1:8b"),
+            "deepseek_r1_14b": ("ollama", "deepseek-r1:14b"),
+            "deepseek_r1_32b": ("ollama", "deepseek-r1:32b"),
+            "deepseek_r1_70b": ("ollama", "deepseek-r1:70b"),
+            "deepseek_r1_671b": ("ollama", "deepseek-r1:671b"),
+            "llama_3.2_1b": ("ollama", "llama3.2:1b"),
+            "llama_3.2_3b": ("ollama", "llama3.2:3b"),
+            "llama_3.1_8b": ("ollama", "llama3.1:8b"),
+            "llama_3.1_70b": ("ollama", "llama3.1:70b"),
+            "llama_3.3_70b": ("ollama", "llama3.3"),
+            "phi_4_14b": ("ollama", "phi4"),
+            "gpt_oss_20b": ("ollama", "granite-code:20b"),
+            "mistral_small_3.1_24b": ("ollama", "mistral-small"),
+            "gemma_3_27b": ("ollama", "gemma2:27b"),
+            "qwen_3.5_9b": ("ollama", "qwen2.5:7b"),
+            "qwen_2.5_coder_32b": ("ollama", "qwen2.5-coder:32b"),
+            "gemma_2_2b": ("ollama", "gemma2:2b"),
+            "gemma_2_9b": ("ollama", "gemma2:9b"),
+            "gemma_2_27b": ("ollama", "gemma2:27b"),
+            "mistral_7b_instruct": ("ollama", "mistral"),
+            "mixtral_8x7b": ("ollama", "mixtral"),
+            "mixtral_8x22b": ("ollama", "mixtral:8x22b"),
+            "qwen_2.5_7b": ("ollama", "qwen2.5:7b"),
+            "qwen_2.5_14b": ("ollama", "qwen2.5:14b"),
+            "qwen_2.5_72b": ("ollama", "qwen2.5:72b"),
+            
+            # Image Generation -> HuggingFace download links
+            "stable_diffusion_1.5": ("url", "https://huggingface.co/runwayml/stable-diffusion-v1-5"),
+            "stable_diffusion_xl": ("url", "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"),
+            "stable_diffusion_3_med": ("url", "https://huggingface.co/stabilityai/stable-diffusion-3-medium"),
+            "flux_1_schnell": ("url", "https://huggingface.co/black-forest-labs/FLUX.1-schnell"),
+            "flux_1_dev": ("url", "https://huggingface.co/black-forest-labs/FLUX.1-dev")
+        }
+
         # Build GUI
         self.create_layout()
         
@@ -736,6 +774,136 @@ class App(ctk.CTk):
             m_tip.pack(anchor="w", pady=(4, 0))
             m_tip.bind("<Enter>", on_enter)
             m_tip.bind("<Leave>", on_leave)
+
+        # Actions frame (buttons)
+        m_id = model["id"]
+        mapping = self.model_mapping.get(m_id)
+        if mapping:
+            map_type, map_val = mapping
+            actions_frame = ctk.CTkFrame(exp_frame, fg_color="transparent")
+            actions_frame.pack(anchor="w", pady=(8, 0))
+            
+            if map_type == "ollama":
+                btn_run = ctk.CTkButton(
+                    actions_frame,
+                    text="⚡ Ejecutar (Ollama)",
+                    font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+                    fg_color="#10B981", # Emerald green
+                    hover_color="#059669",
+                    text_color="#FFFFFF",
+                    height=24,
+                    width=120,
+                    command=lambda val=map_val: self.run_in_ollama(val)
+                )
+                btn_run.pack(side="left", padx=(0, 6))
+                
+                btn_copy = ctk.CTkButton(
+                    actions_frame,
+                    text="📋 Copiar",
+                    font=ctk.CTkFont(family="Segoe UI", size=11),
+                    fg_color="#1F2937", # Dark gray
+                    hover_color="#374151",
+                    text_color="#FFFFFF",
+                    height=24,
+                    width=70,
+                    command=lambda val=map_val: self.copy_to_clipboard(f"ollama run {val}")
+                )
+                btn_copy.pack(side="left")
+            elif map_type == "url":
+                btn_download = ctk.CTkButton(
+                    actions_frame,
+                    text="🌐 HuggingFace",
+                    font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+                    fg_color="#3B82F6", # Blue
+                    hover_color="#2563EB",
+                    text_color="#FFFFFF",
+                    height=24,
+                    width=100,
+                    command=lambda val=map_val: self.open_download_url(val)
+                )
+                btn_download.pack(side="left", padx=(0, 6))
+                
+                btn_guide = ctk.CTkButton(
+                    actions_frame,
+                    text="💡 Guía SD/Flux",
+                    font=ctk.CTkFont(family="Segoe UI", size=11),
+                    fg_color="#1F2937", # Dark gray
+                    hover_color="#374151",
+                    text_color="#FFFFFF",
+                    height=24,
+                    width=90,
+                    command=lambda name=model["name"]: self.show_image_model_guide(name)
+                )
+                btn_guide.pack(side="left")
+
+    def run_in_ollama(self, tag):
+        import subprocess
+        import platform
+        import shutil
+        sys_os = platform.system()
+        
+        try:
+            # Check if ollama is installed by running `ollama --version`
+            subprocess.run(["ollama", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        except Exception:
+            messagebox.showerror(
+                "Ollama No Detectado",
+                "Ollama no parece estar instalado o configurado en tu PATH.\n\n"
+                "Por favor, instala Ollama desde https://ollama.com antes de intentar ejecutar este modelo."
+            )
+            return
+
+        # Start model in a new terminal window
+        try:
+            if sys_os == "Windows":
+                # Start a new cmd window running the command
+                subprocess.Popen(["cmd", "/c", f"start cmd /k ollama run {tag}"])
+            elif sys_os == "Darwin":
+                # Open Terminal app and run the command
+                subprocess.Popen(["osascript", "-e", f'tell app "Terminal" to do script "ollama run {tag}"'])
+            elif sys_os == "Linux":
+                # Try common terminal emulators
+                terminal_launched = False
+                for term in ["gnome-terminal", "konsole", "xfce4-terminal", "xterm"]:
+                    if shutil.which(term):
+                        if term == "gnome-terminal":
+                            subprocess.Popen([term, "--", "bash", "-c", f"ollama run {tag}; exec bash"])
+                        else:
+                            subprocess.Popen([term, "-e", f"bash -c 'ollama run {tag}; exec bash'"])
+                        terminal_launched = True
+                        break
+                if not terminal_launched:
+                    # Fallback to copy to clipboard
+                    self.copy_to_clipboard(f"ollama run {tag}")
+                    messagebox.showinfo("Comando Copiado", f"No se encontró un emulador de terminal compatible.\nSe copió el comando al portapapeles:\n\nollama run {tag}")
+            else:
+                self.copy_to_clipboard(f"ollama run {tag}")
+                messagebox.showinfo("Comando Copiado", f"Se copió el comando al portapapeles:\n\nollama run {tag}")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo abrir la terminal: {e}")
+
+    def copy_to_clipboard(self, text):
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.update() # Keep clipboard contents after app closes
+        messagebox.showinfo("Copiado", f"Copiado al portapapeles:\n\n{text}")
+
+    def open_download_url(self, url):
+        import webbrowser
+        webbrowser.open(url)
+
+    def show_image_model_guide(self, model_name):
+        guide = (
+            f"Guía para ejecutar {model_name} localmente:\n\n"
+            "1. Descarga el archivo del modelo (.safetensors) usando el botón de HuggingFace.\n"
+            "2. Instala una interfaz compatible como:\n"
+            "   - ComfyUI (Recomendado, muy rápido e intermedio)\n"
+            "   - Draw Things (Excelente para macOS con CoreML/Metal)\n"
+            "   - Automatic1111 (Estándar de la industria)\n"
+            "3. Coloca el archivo descargado en la carpeta de modelos de tu interfaz (por ejemplo, 'models/Stable-diffusion' o 'models/checkpoints').\n"
+            "4. Inicia la interfaz y selecciona el modelo para empezar a generar imágenes."
+        )
+        messagebox.showinfo(f"Guía de Uso - {model_name}", guide)
 
 if __name__ == "__main__":
     app = App()
