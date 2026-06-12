@@ -16,8 +16,8 @@ class App(ctk.CTk):
 
         # Window Config
         self.title("AI Local Hardware Detector & Compatibility Engine")
-        self.geometry("1150x750")
-        self.minsize(1000, 650)
+        self.geometry("1150x660")
+        self.minsize(1000, 580)
         
         # Appearance from config
         import config
@@ -76,7 +76,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold"),
             text_color=self.text_primary
         )
-        self.side_title.pack(padx=20, pady=(25, 5), anchor="w")
+        self.side_title.pack(padx=20, pady=(15, 2), anchor="w")
         
         self.side_subtitle = ctk.CTkLabel(
             self.sidebar, 
@@ -84,7 +84,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=self.text_muted
         )
-        self.side_subtitle.pack(padx=20, pady=(0, 20), anchor="w")
+        self.side_subtitle.pack(padx=20, pady=(0, 10), anchor="w")
 
         # Container for Specs Cards
         self.cards_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
@@ -92,19 +92,19 @@ class App(ctk.CTk):
 
         # 1. OS Card
         self.os_card = self.create_spec_card(self.cards_frame, "SISTEMA OPERATIVO", "Detectando...", "💻")
-        self.os_card.pack(fill="x", pady=6)
+        self.os_card.pack(fill="x", pady=4)
         
         # 2. CPU Card
         self.cpu_card = self.create_spec_card(self.cards_frame, "PROCESADOR (CPU)", "Detectando...", "🧠")
-        self.cpu_card.pack(fill="x", pady=6)
+        self.cpu_card.pack(fill="x", pady=4)
         
         # 3. RAM Card
         self.ram_card = self.create_spec_card(self.cards_frame, "MEMORIA RAM", "Detectando...", "💾")
-        self.ram_card.pack(fill="x", pady=6)
+        self.ram_card.pack(fill="x", pady=4)
         
         # 4. GPU Card
         self.gpu_card = self.create_spec_card(self.cards_frame, "GRÁFICOS (GPU)", "Detectando...", "⚡")
-        self.gpu_card.pack(fill="x", pady=6)
+        self.gpu_card.pack(fill="x", pady=4)
 
         # Scanning/Loading status in sidebar
         self.scan_status_label = ctk.CTkLabel(
@@ -113,7 +113,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"),
             text_color="#10B981"
         )
-        self.scan_status_label.pack(padx=20, pady=(10, 5), fill="x")
+        self.scan_status_label.pack(padx=20, pady=(5, 2), fill="x")
 
         # Action Buttons Frame
         self.sidebar_buttons = ctk.CTkFrame(self.sidebar, fg_color="transparent")
@@ -332,8 +332,6 @@ class App(ctk.CTk):
         
         # 2. Update CPU Info
         cpu_display = self.specs["cpu_name"]
-        if len(cpu_display) > 35:
-            cpu_display = cpu_display[:35] + "..."
         self.cpu_card.val_label.configure(text=cpu_display)
         self.cpu_card.sub_label.configure(text=f"Núcleos: {self.specs['cores']} físicos, {self.specs['threads']} hilos")
         
@@ -352,8 +350,6 @@ class App(ctk.CTk):
         if gpus:
             primary_gpu = gpus[0]
             gpu_name = primary_gpu["name"]
-            if len(gpu_name) > 30:
-                gpu_name = gpu_name[:30] + "..."
             
             vram_info = f"{primary_gpu['vram']} GB"
             if primary_gpu.get("unified"):
