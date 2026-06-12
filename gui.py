@@ -117,6 +117,43 @@ class App(ctk.CTk):
         self.gpu_card = self.create_spec_card(self.cards_frame, "GRÁFICOS (GPU)", "Detectando...", "⚡")
         self.gpu_card.pack(fill="x", pady=4)
 
+        # Software Header
+        self.soft_title = ctk.CTkLabel(
+            self.sidebar, 
+            text="MI SOFTWARE 🛠️", 
+            font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
+            text_color=self.text_primary
+        )
+        self.soft_title.pack(padx=20, pady=(20, 2), anchor="w")
+        
+        self.soft_subtitle = ctk.CTkLabel(
+            self.sidebar, 
+            text="Entornos y drivers de compilación:", 
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color=self.text_muted
+        )
+        self.soft_subtitle.pack(padx=20, pady=(0, 8), anchor="w")
+
+        # Container for Software Cards
+        self.soft_cards_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        self.soft_cards_frame.pack(fill="both", expand=True, padx=15, pady=0)
+
+        # 1. Python Card
+        self.python_card = self.create_spec_card(self.soft_cards_frame, "ENTORNO PYTHON", "Detectando...", "🐍")
+        self.python_card.pack(fill="x", pady=4)
+        
+        # 2. CUDA Card
+        self.cuda_card = self.create_spec_card(self.soft_cards_frame, "NVIDIA CUDA / DRIVER", "Detectando...", "💚")
+        self.cuda_card.pack(fill="x", pady=4)
+        
+        # 3. ROCm Card
+        self.rocm_card = self.create_spec_card(self.soft_cards_frame, "AMD ROCm / HIP", "Detectando...", "❤️")
+        self.rocm_card.pack(fill="x", pady=4)
+        
+        # 4. Compilers Card
+        self.compilers_card = self.create_spec_card(self.soft_cards_frame, "COMPILADORES C++", "Detectando...", "🔧")
+        self.compilers_card.pack(fill="x", pady=4)
+
         # Scanning/Loading status in sidebar
         self.scan_status_label = ctk.CTkLabel(
             self.sidebar,
@@ -124,7 +161,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"),
             text_color="#10B981"
         )
-        self.scan_status_label.pack(padx=20, pady=(5, 2), fill="x")
+        self.scan_status_label.pack(padx=20, pady=(10, 2), fill="x")
 
         # Action Buttons Frame
         self.sidebar_buttons = ctk.CTkFrame(self.sidebar, fg_color="transparent")
@@ -342,7 +379,7 @@ class App(ctk.CTk):
     def update_scan_results(self):
         # Enable rescan button
         self.rescan_btn.configure(state="normal", text="🔄 Volver a Escanear")
-        self.scan_status_label.configure(text="Hardware detectado correctamente", text_color="#10B981")
+        self.scan_status_label.configure(text="Sistema analizado correctamente", text_color="#10B981")
         
         # Update DB status indicator
         if self.online_mode:
@@ -351,34 +388,39 @@ class App(ctk.CTk):
         else:
             self.db_status_dot.configure(text_color="#F59E0B")
             self.db_status_label.configure(text="Base de Datos: Offline (Local)")
+            
+        # Extract hardware and software from specs dictionary
+        hw_specs = self.specs.get("hardware", self.specs)
+        sw_specs = self.specs.get("software", {})
         
         # 1. Update OS Info
-        os_pretty = self.specs.get("os_pretty", f"{self.specs['os']} {self.specs['os_release']}")
+        os_pretty = hw_specs.get("os_pretty", f"{hw_specs.get('os')} {hw_specs.get('os_release')}")
         self.os_card.val_label.configure(text=os_pretty)
-        self.os_card.sub_label.configure(text=f"Arquitectura: {self.specs['arch']}")
+        self.os_card.sub_label.configure(text=f"Arquitectura: {hw_specs.get('arch')}")
         
         # 2. Update CPU Info
-        cpu_display = self.specs["cpu_name"]
+        cpu_display = hw_specs.get("cpu_name")
         self.cpu_card.val_label.configure(text=cpu_display)
-        self.cpu_card.sub_label.configure(text=f"Núcleos: {self.specs['cores']} físicos, {self.specs['threads']} hilos")
+        self.cpu_card.sub_label.configure(text=f"Núcleos: {hw_specs.get('cores')} físicos, {hw_specs.get('threads')} hilos")
         
         # 3. Update RAM Info
-        ram_installed = self.specs.get("ram_installed", self.specs["ram"])
+        ram_val = hw_specs.get("ram", 0.0)
+        ram_installed = hw_specs.get("ram_installed", ram_val)
         ram_desc = "Memoria del Sistema"
-        if self.specs["is_apple_silicon"]:
+        if hw_specs.get("is_apple_silicon"):
             ram_desc = "Memoria Unificada"
-        elif ram_installed > self.specs["ram"]:
+        elif ram_installed > ram_val:
             ram_desc = f"Usable ({ram_installed} GB física)"
-        self.ram_card.val_label.configure(text=f"{self.specs['ram']} GB RAM")
+        self.ram_card.val_label.configure(text=f"{ram_val} GB RAM")
         self.ram_card.sub_label.configure(text=ram_desc)
         
         # 4. Update GPU Info
-        gpus = self.specs["gpus"]
+        gpus = hw_specs.get("gpus", [])
         if gpus:
             primary_gpu = gpus[0]
-            gpu_name = primary_gpu["name"]
+            gpu_name = primary_gpu.get("name")
             
-            vram_info = f"{primary_gpu['vram']} GB"
+            vram_info = f"{primary_gpu.get('vram')} GB"
             if primary_gpu.get("unified"):
                 vram_info += " (Compartido/Unified)"
             else:
@@ -389,6 +431,50 @@ class App(ctk.CTk):
         else:
             self.gpu_card.val_label.configure(text="Sin GPU dedicada")
             self.gpu_card.sub_label.configure(text="Usa gráficos integrados / CPU")
+            
+        # Update Software Cards
+        # 1. Python
+        py_info = sw_specs.get("python", {})
+        py_ver = py_info.get("version", "Desconocida")
+        py_env = py_info.get("env_type", "System")
+        py_arch = py_info.get("arch", "")
+        self.python_card.val_label.configure(text=f"Python {py_ver} ({py_arch})")
+        self.python_card.sub_label.configure(text=f"Entorno: {py_env}")
+
+        # 2. CUDA
+        cuda_info = sw_specs.get("cuda", {})
+        if cuda_info.get("available"):
+            driver_ver = cuda_info.get("driver_version") or "Desconocido"
+            cuda_sup = cuda_info.get("cuda_version_supported") or "Desconocido"
+            nvcc_ver = cuda_info.get("nvcc_toolkit_version")
+            nvcc_str = f", NVCC: {nvcc_ver}" if nvcc_ver else " (Sin NVCC)"
+            
+            self.cuda_card.val_label.configure(text=f"CUDA Soportado: {cuda_sup}")
+            self.cuda_card.sub_label.configure(text=f"Driver: {driver_ver}{nvcc_str}")
+        else:
+            self.cuda_card.val_label.configure(text="No Detectado")
+            self.cuda_card.sub_label.configure(text="Sin GPU NVIDIA o Driver CUDA")
+
+        # 3. ROCm
+        rocm_info = sw_specs.get("rocm", {})
+        if rocm_info.get("available"):
+            rocm_ver = rocm_info.get("version") or "Instalado"
+            self.rocm_card.val_label.configure(text=f"ROCm/HIP Detectado")
+            self.rocm_card.sub_label.configure(text=f"Versión: {rocm_ver}")
+        else:
+            self.rocm_card.val_label.configure(text="No Detectado")
+            self.rocm_card.sub_label.configure(text="Sin soporte AMD ROCm/HIP")
+
+        # 4. Compilers
+        comp_info = sw_specs.get("compilers", {})
+        avail_compilers = [k for k, v in comp_info.items() if v]
+        if avail_compilers:
+            comp_list = ", ".join([c.upper() for c in avail_compilers])
+            self.compilers_card.val_label.configure(text=comp_list)
+            self.compilers_card.sub_label.configure(text="Listos para compilar dependencias")
+        else:
+            self.compilers_card.val_label.configure(text="Ninguno Detectado")
+            self.compilers_card.sub_label.configure(text="Instala MSVC/GCC/Clang para construir de fuentes")
             
         # Refresh models display
         self.render_models_list()

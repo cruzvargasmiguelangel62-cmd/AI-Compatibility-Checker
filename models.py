@@ -68,12 +68,15 @@ TIER_LABELS = {
 }
 
 def evaluate_compatibility(specs):
-    total_ram = specs["ram"]
-    is_apple_silicon = specs["is_apple_silicon"]
-    system_os = specs["os"] # 'Windows', 'Linux', 'Darwin'
+    # Support both old flat specs and new nested specs dictionary
+    hw_specs = specs.get("hardware", specs)
+    
+    total_ram = hw_specs["ram"]
+    is_apple_silicon = hw_specs["is_apple_silicon"]
+    system_os = hw_specs["os"] # 'Windows', 'Linux', 'Darwin'
     
     # Find active GPU with maximum VRAM
-    gpus = specs["gpus"]
+    gpus = hw_specs["gpus"]
     max_vram = 0.0
     has_discrete_gpu = False
     active_gpu_name = "CPU Only"
