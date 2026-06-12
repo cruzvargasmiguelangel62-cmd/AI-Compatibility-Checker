@@ -41,44 +41,6 @@ class App(ctk.CTk):
         self.search_query = ""
         self.online_mode = False
 
-        # Mapping model IDs to Ollama tags and download URLs
-        self.model_mapping = {
-            # Text (LLMs) -> Ollama tags
-            "deepseek_r1_1.5b": ("ollama", "deepseek-r1:1.5b"),
-            "deepseek_r1_8b": ("ollama", "deepseek-r1:8b"),
-            "deepseek_r1_14b": ("ollama", "deepseek-r1:14b"),
-            "deepseek_r1_32b": ("ollama", "deepseek-r1:32b"),
-            "deepseek_r1_70b": ("ollama", "deepseek-r1:70b"),
-            "deepseek_r1_671b": ("ollama", "deepseek-r1:671b"),
-            "llama_3.2_1b": ("ollama", "llama3.2:1b"),
-            "llama_3.2_3b": ("ollama", "llama3.2:3b"),
-            "llama_3.1_8b": ("ollama", "llama3.1:8b"),
-            "llama_3.1_70b": ("ollama", "llama3.1:70b"),
-            "llama_3.3_70b": ("ollama", "llama3.3"),
-            "phi_4_14b": ("ollama", "phi4"),
-            "gpt_oss_20b": ("ollama", "granite-code:20b"),
-            "mistral_small_3.1_24b": ("ollama", "mistral-small"),
-            "gemma_3_27b": ("ollama", "gemma2:27b"),
-            "qwen_3.5_9b": ("ollama", "qwen2.5:7b"),
-            "qwen_2.5_coder_32b": ("ollama", "qwen2.5-coder:32b"),
-            "gemma_2_2b": ("ollama", "gemma2:2b"),
-            "gemma_2_9b": ("ollama", "gemma2:9b"),
-            "gemma_2_27b": ("ollama", "gemma2:27b"),
-            "mistral_7b_instruct": ("ollama", "mistral"),
-            "mixtral_8x7b": ("ollama", "mixtral"),
-            "mixtral_8x22b": ("ollama", "mixtral:8x22b"),
-            "qwen_2.5_7b": ("ollama", "qwen2.5:7b"),
-            "qwen_2.5_14b": ("ollama", "qwen2.5:14b"),
-            "qwen_2.5_72b": ("ollama", "qwen2.5:72b"),
-            
-            # Image Generation -> HuggingFace download links
-            "stable_diffusion_1.5": ("url", "https://huggingface.co/runwayml/stable-diffusion-v1-5"),
-            "stable_diffusion_xl": ("url", "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"),
-            "stable_diffusion_3_med": ("url", "https://huggingface.co/stabilityai/stable-diffusion-3-medium"),
-            "flux_1_schnell": ("url", "https://huggingface.co/black-forest-labs/FLUX.1-schnell"),
-            "flux_1_dev": ("url", "https://huggingface.co/black-forest-labs/FLUX.1-dev")
-        }
-
         # Build GUI
         self.create_layout()
         
@@ -776,14 +738,14 @@ class App(ctk.CTk):
             m_tip.bind("<Leave>", on_leave)
 
         # Actions frame (buttons)
-        m_id = model["id"]
-        mapping = self.model_mapping.get(m_id)
-        if mapping:
-            map_type, map_val = mapping
+        ollama_tag = model.get("ollama_tag")
+        download_url = model.get("download_url")
+        
+        if ollama_tag or download_url:
             actions_frame = ctk.CTkFrame(exp_frame, fg_color="transparent")
             actions_frame.pack(anchor="w", pady=(8, 0))
             
-            if map_type == "ollama":
+            if ollama_tag:
                 btn_run = ctk.CTkButton(
                     actions_frame,
                     text="⚡ Ejecutar (Ollama)",
@@ -793,7 +755,7 @@ class App(ctk.CTk):
                     text_color="#FFFFFF",
                     height=24,
                     width=120,
-                    command=lambda val=map_val: self.run_in_ollama(val)
+                    command=lambda val=ollama_tag: self.run_in_ollama(val)
                 )
                 btn_run.pack(side="left", padx=(0, 6))
                 
@@ -806,10 +768,10 @@ class App(ctk.CTk):
                     text_color="#FFFFFF",
                     height=24,
                     width=70,
-                    command=lambda val=map_val: self.copy_to_clipboard(f"ollama run {val}")
+                    command=lambda val=ollama_tag: self.copy_to_clipboard(f"ollama run {val}")
                 )
                 btn_copy.pack(side="left")
-            elif map_type == "url":
+            elif download_url:
                 btn_download = ctk.CTkButton(
                     actions_frame,
                     text="🌐 HuggingFace",
@@ -819,7 +781,7 @@ class App(ctk.CTk):
                     text_color="#FFFFFF",
                     height=24,
                     width=100,
-                    command=lambda val=map_val: self.open_download_url(val)
+                    command=lambda val=download_url: self.open_download_url(val)
                 )
                 btn_download.pack(side="left", padx=(0, 6))
                 

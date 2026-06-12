@@ -8,7 +8,8 @@
     "vram_q4": 1.8,
     "ram_q4": 2.2,
     "description": "Modelo de razonamiento ultraligero. Excelente para ordenadores de gama baja o portátiles básicos.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:1.5b"
   },
   {
     "id": "deepseek_r1_8b",
@@ -19,7 +20,8 @@
     "vram_q4": 5.7,
     "ram_q4": 8.5,
     "description": "Modelo de razonamiento de alto nivel ideal para tareas complejas y programación. Excelente balance velocidad/calidad.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:8b"
   },
   {
     "id": "deepseek_r1_14b",
@@ -30,7 +32,8 @@
     "vram_q4": 9.5,
     "ram_q4": 15.0,
     "description": "Modelo intermedio de razonamiento avanzado. Ofrece respuestas muy precisas.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:14b"
   },
   {
     "id": "deepseek_r1_32b",
@@ -41,7 +44,8 @@
     "vram_q4": 20.5,
     "ram_q4": 33.0,
     "description": "Modelo de razonamiento potente para tareas complejas de nivel científico. Requiere hardware robusto.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:32b"
   },
   {
     "id": "deepseek_r1_70b",
@@ -52,7 +56,8 @@
     "vram_q4": 44.0,
     "ram_q4": 72.0,
     "description": "Modelo destilado de nivel superior. Capacidad de razonamiento similar a GPT-4o o Claude 3.5 Sonnet localmente.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:70b"
   },
   {
     "id": "deepseek_r1_671b",
@@ -63,7 +68,8 @@
     "vram_q4": 380.0,
     "ram_q4": 410.0,
     "description": "El modelo de razonamiento de código abierto más potente del mundo a escala completa. Requiere hardware de servidor empresarial.",
-    "provider": "DeepSeek / Ollama"
+    "provider": "DeepSeek / Ollama",
+    "ollama_tag": "deepseek-r1:671b"
   },
   {
     "id": "llama_3.2_1b",
@@ -74,7 +80,8 @@
     "vram_q4": 1.2,
     "ram_q4": 1.8,
     "description": "Modelo extremadamente rápido y ligero de Meta. Perfecto para dispositivos móviles o portátiles antiguos.",
-    "provider": "Meta / Ollama"
+    "provider": "Meta / Ollama",
+    "ollama_tag": "llama3.2:1b"
   },
   {
     "id": "llama_3.2_3b",
@@ -85,7 +92,8 @@
     "vram_q4": 2.2,
     "ram_q4": 3.5,
     "description": "Excelente para tareas simples y chats rápidos en hardware ligero.",
-    "provider": "Meta / Ollama"
+    "provider": "Meta / Ollama",
+    "ollama_tag": "llama3.2:3b"
   },
   {
     "id": "llama_3.1_8b",
@@ -96,7 +104,8 @@
     "vram_q4": 5.5,
     "ram_q4": 8.0,
     "description": "El modelo generalista más popular. Conversación natural, traducción y codificación ligera.",
-    "provider": "Meta / Ollama"
+    "provider": "Meta / Ollama",
+    "ollama_tag": "llama3.1:8b"
   },
   {
     "id": "llama_3.1_70b",
@@ -107,7 +116,8 @@
     "vram_q4": 43.0,
     "ram_q4": 70.0,
     "description": "Modelo de Meta de 70B. Capacidad analítica superior para procesamiento de texto complejo.",
-    "provider": "Meta / Ollama"
+    "provider": "Meta / Ollama",
+    "ollama_tag": "llama3.1:70b"
   },
   {
     "id": "llama_3.3_70b",
@@ -118,7 +128,8 @@
     "vram_q4": 43.0,
     "ram_q4": 70.0,
     "description": "Modelo insignia de Meta. Gran precisión pero requiere una estación de trabajo con alta potencia de VRAM/RAM.",
-    "provider": "Meta / Ollama"
+    "provider": "Meta / Ollama",
+    "ollama_tag": "llama3.3"
   },
   {
     "id": "phi_4_14b",
@@ -129,7 +140,8 @@
     "vram_q4": 9.2,
     "ram_q4": 14.5,
     "description": "Modelo de Microsoft de alta gama y razonamiento avanzado en un tamaño compacto.",
-    "provider": "Microsoft / Ollama"
+    "provider": "Microsoft / Ollama",
+    "ollama_tag": "phi4"
   },
   {
     "id": "gpt_oss_20b",
@@ -140,7 +152,8 @@
     "vram_q4": 12.8,
     "ram_q4": 20.0,
     "description": "Modelo experimental de código abierto enfocado en lógica y razonamiento puro.",
-    "provider": "OpenSource / Ollama"
+    "provider": "OpenSource / Ollama",
+    "ollama_tag": "granite-code:20b"
   },
   {
     "id": "mistral_small_3.1_24b",
@@ -151,7 +164,8 @@
     "vram_q4": 14.5,
     "ram_q4": 25.0,
     "description": "Modelo de Mistral AI optimizado para rendimiento en servidores domésticos o estaciones de trabajo.",
-    "provider": "Mistral AI / Ollama"
+    "provider": "Mistral AI / Ollama",
+    "ollama_tag": "mistral-small"
   },
   {
     "id": "gemma_3_27b",
@@ -162,7 +176,8 @@
     "vram_q4": 16.5,
     "ram_q4": 28.0,
     "description": "La última generación de Google Gemma. Nivel de razonamiento extremo en procesamiento de texto.",
-    "provider": "Google / Ollama"
+    "provider": "Google / Ollama",
+    "ollama_tag": "gemma2:27b"
   },
   {
     "id": "qwen_3.5_9b",
@@ -173,7 +188,8 @@
     "vram_q4": 6.2,
     "ram_q4": 9.5,
     "description": "Modelo multilenguaje superlativo de Alibaba, excelente en lógica y conversación.",
-    "provider": "Alibaba / Ollama"
+    "provider": "Alibaba / Ollama",
+    "ollama_tag": "qwen2.5:7b"
   },
   {
     "id": "qwen_2.5_coder_32b",
@@ -184,7 +200,8 @@
     "vram_q4": 20.5,
     "ram_q4": 33.0,
     "description": "El mejor modelo de codificación local. Programación avanzada a nivel de GPT-4o.",
-    "provider": "Alibaba / Ollama"
+    "provider": "Alibaba / Ollama",
+    "ollama_tag": "qwen2.5-coder:32b"
   },
   {
     "id": "gemma_2_2b",
@@ -195,7 +212,8 @@
     "vram_q4": 1.8,
     "ram_q4": 2.8,
     "description": "Modelo muy eficiente de Google. Respuestas rápidas y de alta calidad para su tamaño compacto.",
-    "provider": "Google / Ollama"
+    "provider": "Google / Ollama",
+    "ollama_tag": "gemma2:2b"
   },
   {
     "id": "gemma_2_9b",
@@ -206,7 +224,8 @@
     "vram_q4": 6.2,
     "ram_q4": 9.5,
     "description": "Excelente para escritura y lógica. Supera a muchos modelos de 13B y 15B.",
-    "provider": "Google / Ollama"
+    "provider": "Google / Ollama",
+    "ollama_tag": "gemma2:9b"
   },
   {
     "id": "gemma_2_27b",
@@ -217,7 +236,8 @@
     "vram_q4": 18.0,
     "ram_q4": 29.0,
     "description": "Rendimiento sobresaliente que se acerca a modelos de 70B pero a la mitad de su tamaño.",
-    "provider": "Google / Ollama"
+    "provider": "Google / Ollama",
+    "ollama_tag": "gemma2:27b"
   },
   {
     "id": "mistral_7b_instruct",
@@ -228,7 +248,8 @@
     "vram_q4": 5.0,
     "ram_q4": 7.5,
     "description": "El clásico modelo de Mistral AI. Muy equilibrado y rápido en tareas sencillas.",
-    "provider": "Mistral AI / Ollama"
+    "provider": "Mistral AI / Ollama",
+    "ollama_tag": "mistral"
   },
   {
     "id": "mixtral_8x7b",
@@ -239,7 +260,8 @@
     "vram_q4": 26.0,
     "ram_q4": 38.0,
     "description": "Modelo de mezcla de expertos. Ofrece la velocidad de un modelo de 12B pero con calidad de 47B.",
-    "provider": "Mistral AI / Ollama"
+    "provider": "Mistral AI / Ollama",
+    "ollama_tag": "mixtral"
   },
   {
     "id": "mixtral_8x22b",
@@ -250,7 +272,8 @@
     "vram_q4": 75.0,
     "ram_q4": 110.0,
     "description": "El modelo MoE gigante de Mistral AI. Excepcional razonamiento matemático y de código.",
-    "provider": "Mistral AI / Ollama"
+    "provider": "Mistral AI / Ollama",
+    "ollama_tag": "mixtral:8x22b"
   },
   {
     "id": "qwen_2.5_7b",
@@ -261,7 +284,8 @@
     "vram_q4": 5.2,
     "ram_q4": 8.0,
     "description": "Gran capacidad de redacción y comprensión en español en solo 7B de parámetros.",
-    "provider": "Alibaba / Ollama"
+    "provider": "Alibaba / Ollama",
+    "ollama_tag": "qwen2.5:7b"
   },
   {
     "id": "qwen_2.5_14b",
@@ -272,7 +296,8 @@
     "vram_q4": 9.5,
     "ram_q4": 15.0,
     "description": "Muy recomendado para redacción avanzada y tareas que superan a los modelos de 8B.",
-    "provider": "Alibaba / Ollama"
+    "provider": "Alibaba / Ollama",
+    "ollama_tag": "qwen2.5:14b"
   },
   {
     "id": "qwen_2.5_72b",
@@ -283,7 +308,8 @@
     "vram_q4": 44.0,
     "ram_q4": 72.0,
     "description": "Uno de los modelos más grandes y capaces disponibles para correr en local de forma autónoma.",
-    "provider": "Alibaba / Ollama"
+    "provider": "Alibaba / Ollama",
+    "ollama_tag": "qwen2.5:72b"
   },
   {
     "id": "stable_diffusion_1.5",
@@ -294,7 +320,8 @@
     "vram_q4": 4.0,
     "ram_q4": 8.0,
     "description": "Generador de imágenes clásico y ligero. Cientos de modelos personalizados (checkpoints) disponibles.",
-    "provider": "Stability AI"
+    "provider": "Stability AI",
+    "download_url": "https://huggingface.co/runwayml/stable-diffusion-v1-5"
   },
   {
     "id": "stable_diffusion_xl",
@@ -305,7 +332,8 @@
     "vram_q4": 8.0,
     "ram_q4": 16.0,
     "description": "Estándar de calidad para imágenes fotorrealistas y artísticas de alta resolución (1024x1024).",
-    "provider": "Stability AI"
+    "provider": "Stability AI",
+    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
   },
   {
     "id": "stable_diffusion_3_med",
@@ -316,7 +344,8 @@
     "vram_q4": 6.5,
     "ram_q4": 12.0,
     "description": "La tercera generación de SD. Comprensión mejorada de prompts de texto y mejor renderizado de textos.",
-    "provider": "Stability AI"
+    "provider": "Stability AI",
+    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-3-medium"
   },
   {
     "id": "flux_1_schnell",
@@ -327,7 +356,8 @@
     "vram_q4": 12.0,
     "ram_q4": 24.0,
     "description": "El modelo de generación de imágenes local más moderno y realista. Calidad extrema en solo 4 pasos.",
-    "provider": "Black Forest Labs"
+    "provider": "Black Forest Labs",
+    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell"
   },
   {
     "id": "flux_1_dev",
@@ -338,6 +368,7 @@
     "vram_q4": 14.0,
     "ram_q4": 28.0,
     "description": "El modelo de desarrollo de FLUX. Ofrece la máxima fidelidad y detalles en prompts complejos.",
-    "provider": "Black Forest Labs"
+    "provider": "Black Forest Labs",
+    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-dev"
   }
 ]
