@@ -1,0 +1,189 @@
+# -*- coding: utf-8 -*-
+
+import os
+import json
+import config
+
+# Load models database dynamically from models.json or remote URL
+def load_models_data(online=False):
+    if not online:
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            json_path = os.path.join(current_dir, "models.json")
+            with open(json_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading models.json: {e}")
+            return []
+    else:
+        import urllib.request
+        url = config.ONLINE_MODELS_URL
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                return json.loads(response.read().decode('utf-8'))
+        except Exception as e:
+            print(f"Error fetching online models from {url}: {e}")
+            # Fallback to local models_online.json
+            try:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                local_online_path = os.path.join(current_dir, "models_online.json")
+                if os.path.exists(local_online_path):
+                    with open(local_online_path, "r", encoding="utf-8") as f:
+                        return json.load(f)
+            except Exception as e2:
+                print(f"Error loading local models_online.json fallback: {e2}")
+            
+            # If everything else fails, return local models.json
+            try:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                json_path = os.path.join(current_dir, "models.json")
+                with open(json_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+            return []
+
+TIER_COLORS = {
+    "RUNS_GREAT": "#10B981", # Emerald Green
+    "RUNS_WELL": "#34D399",  # Light Green
+    "DECENT_SLOW": "#F59E0B",# Amber/Yellow
+    "TIGHT_FIT": "#F97316",  # Orange
+    "TOO_HEAVY": "#EF4444"   # Red
+}
+
+TIER_LABELS = {
+    "RUNS_GREAT": "Funciona Excelente",
+    "RUNS_WELL": "Funciona Bien",
+    "DECENT_SLOW": "Lento (CPU)",
+    "TIGHT_FIT": "Ajustado (Lento)",
+    "TOO_HEAVY": "Demasiado Pesado"
+}
+
+def evaluate_compatibility(specs, online=False):
+    total_ram = specs["ram"]
+    is_apple_silicon = specs["is_apple_silicon"]
+    system_os = specs["os"] # 'Windows', 'Linux', 'Darwin'
+    
+    # Find active GPU with maximum VRAM
+    gpus = specs["gpus"]
+    max_vram = 0.0
+    has_discrete_gpu = False
+    active_gpu_name = "CPU Only"
+    active_gpu_vendor = "Other"
+    
+    if gpus:
+        # Sort to find the best GPU
+        best_gpu = max(gpus, key=lambda g: g["vram"])
+        max_vram = best_gpu["vram"]
+        active_gpu_name = best_gpu["name"]
+        active_gpu_vendor = best_gpu["vendor"]
+        if best_gpu["vendor"] in ["NVIDIA", "AMD", "Apple"] and max_vram > 1.0:
+            has_discrete_gpu = True
+
+    rated_models = []
+    models_db = load_models_data(online)
+    for model in models_db:
+        vram_needed = model["vram_q4"]
+        ram_needed = model["ram_q4"]
+        
+        status = "TOO_HEAVY"
+        details = ""
+        os_tip = ""
+        
+        # OS-SPECIFIC RAM ADJUSTMENTS
+        # Linux is lightweight, Windows is heavy. We adjust the required RAM buffer.
+        os_ram_penalty = 0.0
+        if system_os == "Windows":
+            os_ram_penalty = config.OS_RAM_PENALTY_WINDOWS
+        elif system_os == "Linux":
+            os_ram_penalty = config.OS_RAM_PENALTY_LINUX
+            
+        adjusted_ram_needed = ram_needed + os_ram_penalty
+
+        # ==========================================
+        # OS & GPU SYNERGY TIPS
+        # ==========================================
+        if model["category"] == "Image Generation":
+            if active_gpu_vendor == "NVIDIA":
+                os_tip = "🪟/🐧 CUDA ofrece el rendimiento óptimo y nativo para este modelo." if system_os in ["Windows", "Linux"] else "CUDA detectado."
+            elif active_gpu_vendor == "AMD" and system_os == "Windows":
+                os_tip = "🪟 En Windows (DirectML), AMD puede ser lento generando imágenes. Linux (ROCm) es mucho más rápido."
+            elif active_gpu_vendor == "AMD" and system_os == "Linux":
+                os_tip = "🐧 Excelente rendimiento nativo en Linux usando la arquitectura ROCm de AMD."
+            elif system_os == "Darwin" and is_apple_silicon:
+                os_tip = "🍎 Optimizado nativamente en Mac usando CoreML/Metal (Apps como Draw Things)."
+                
+        elif model["category"] == "Text (LLM)":
+            if active_gpu_vendor == "AMD" and system_os == "Windows":
+                os_tip = "🪟 Ollama usará Vulkan para tu gráfica AMD. Funciona bien, pero en Linux tendrías mayor velocidad."
+            elif active_gpu_vendor == "NVIDIA" and system_os == "Linux":
+                os_tip = "🐧 La combinación Linux + NVIDIA ofrece la menor latencia posible para LLMs locales."
+            elif system_os == "Windows" and not has_discrete_gpu:
+                os_tip = "🪟 Windows consume mucha RAM en segundo plano. Cierra navegadores pesados para liberar CPU/RAM."
+            elif system_os == "Darwin" and is_apple_silicon:
+                os_tip = "🍎 Ollama aprovecha el framework MLX/Metal de Apple. Rendimiento espectacular y silencioso."
+
+        # ==========================================
+        # HARDWARE EVALUATION LOGIC
+        # ==========================================
+        if is_apple_silicon:
+            # macOS Unified Memory
+            usable_memory = total_ram
+            
+            if usable_memory >= vram_needed + config.MAC_RAM_BUFFER_GREAT:
+                status = "RUNS_GREAT"
+                details = f"Carga completa en memoria unificada ({vram_needed}GB req, {total_ram}GB total). Muy rápido."
+            elif usable_memory >= vram_needed + config.MAC_RAM_BUFFER_WELL:
+                status = "RUNS_WELL"
+                details = f"Cabe en memoria unificada, pero dejará poco espacio para macOS y otras apps."
+            elif usable_memory >= vram_needed:
+                status = "TIGHT_FIT"
+                details = f"Al límite de la memoria unificada. Provocará swapping y ralentizará el Mac."
+            else:
+                status = "TOO_HEAVY"
+                details = f"Requiere {vram_needed}GB. Tu Mac de {total_ram}GB no tiene memoria suficiente."
+                
+        else:
+            # Windows / Linux (Dedicated GPU + System RAM)
+            if has_discrete_gpu:
+                if max_vram >= vram_needed + config.WIN_VRAM_BUFFER_GREAT:
+                    status = "RUNS_GREAT"
+                    details = f"Se ejecuta 100% en la GPU ({active_gpu_vendor}) usando {vram_needed}GB de VRAM."
+                elif max_vram >= vram_needed * config.WIN_VRAM_MULTIPLIER_WELL and total_ram >= adjusted_ram_needed + config.WIN_RAM_BUFFER_GPU_WELL:
+                    status = "RUNS_WELL"
+                    details = f"GPU VRAM ({max_vram}GB) comparte carga con la RAM. Funcionamiento fluido."
+                elif total_ram >= adjusted_ram_needed + config.CPU_RAM_BUFFER_DECENT:
+                    status = "DECENT_SLOW"
+                    details = f"VRAM insuficiente. Se apoyará fuertemente en CPU/RAM. Será lento."
+                elif total_ram >= adjusted_ram_needed + config.CPU_RAM_BUFFER_TIGHT:
+                    status = "TIGHT_FIT"
+                    details = f"Cabe en la RAM pero de forma muy ajustada. Riesgo de cuelgues del sistema operativo."
+                else:
+                    status = "TOO_HEAVY"
+                    details = f"Demasiado pesado. Requiere ~{round(adjusted_ram_needed, 1)}GB libres (ajustado por OS)."
+            else:
+                # CPU Only
+                if total_ram >= adjusted_ram_needed + config.CPU_RAM_BUFFER_DECENT:
+                    status = "DECENT_SLOW"
+                    details = f"Sin GPU dedicada. Correrá en CPU. Funcional pero a baja velocidad."
+                elif total_ram >= adjusted_ram_needed + config.CPU_RAM_BUFFER_TIGHT:
+                    status = "TIGHT_FIT"
+                    details = f"Ajustado al límite de la RAM. El sistema {system_os} podría congelarse temporalmente."
+                else:
+                    status = "TOO_HEAVY"
+                    details = f"Falta memoria RAM. Requiere ~{round(adjusted_ram_needed, 1)}GB para operar estable en CPU."
+
+        rated_models.append({
+            **model,
+            "status": status,
+            "color": TIER_COLORS[status],
+            "status_label": TIER_LABELS[status],
+            "details": details,
+            "os_tip": os_tip
+        })
+        
+    return rated_models
