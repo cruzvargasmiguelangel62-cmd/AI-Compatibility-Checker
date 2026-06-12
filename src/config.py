@@ -32,6 +32,7 @@ _env = load_env(ENV_PATH)
 # UI Settings
 APP_THEME = _env.get("APP_THEME", "dark")
 APP_COLOR_THEME = _env.get("APP_COLOR_THEME", "blue")
+APP_SCALING = _env.get("APP_SCALING", "auto")
 
 # Helper to parse floats safely
 def _get_float(key, default):

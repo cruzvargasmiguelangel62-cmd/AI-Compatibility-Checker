@@ -46,6 +46,22 @@ class App(ctk.CTk):
         ctk.set_appearance_mode(config.APP_THEME)
         ctk.set_default_color_theme(config.APP_COLOR_THEME)
         
+        # Scaling adjustments
+        scaling_val = 1.0
+        if config.APP_SCALING == "auto":
+            if platform.system() == "Linux":
+                scaling_val = 1.25 # Modest upscaling on Linux by default for better visibility
+            else:
+                scaling_val = 1.0
+        else:
+            try:
+                scaling_val = float(config.APP_SCALING)
+            except ValueError:
+                scaling_val = 1.0
+        
+        ctk.set_widget_scaling(scaling_val)
+        ctk.set_window_scaling(scaling_val)
+        
         # Color Palette
         self.bg_color = "#0B0F19"       # Deep dark space cadet blue
         self.card_color = "#111827"     # Dark card background
