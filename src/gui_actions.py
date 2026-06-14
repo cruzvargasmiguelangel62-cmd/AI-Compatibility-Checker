@@ -208,7 +208,15 @@ class AppActionsMixin:
         self.clipboard_clear()
         self.clipboard_append(text)
         self.update()
-        messagebox.showinfo(UI_TEXT["clipboard_title"], UI_TEXT["clipboard_body"].format(value=text))
+        
+        # Format the display text if it's a long report or has multiple lines
+        if len(text) > 120 or "\n" in text:
+            msg = "¡Especificaciones de hardware copiadas con éxito al portapapeles! Listo para compartir."
+            if getattr(self, "active_language", "es") == "en":
+                msg = "Hardware specifications successfully copied to clipboard! Ready to share."
+            messagebox.showinfo(UI_TEXT["clipboard_title"], msg)
+        else:
+            messagebox.showinfo(UI_TEXT["clipboard_title"], UI_TEXT["clipboard_body"].format(value=text))
 
     def open_download_url(self, url):
         webbrowser.open(url)
