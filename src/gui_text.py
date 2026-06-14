@@ -1,0 +1,422 @@
+import tkinter as tk
+import tkinter.font as tkfont
+
+import customtkinter as ctk
+
+from src import config
+
+UI_BASE = config.UI_BASE
+
+
+import json
+
+import customtkinter as ctk
+
+from src import config
+
+UI_BASE = config.UI_BASE
+
+TRANSLATIONS = {
+    "es": {
+        "UI_TEXT": {
+            "sidebar_title": "MI HARDWARE 🖥️",
+            "sidebar_subtitle": "Recursos detectados en tu máquina:",
+            "software_title": "MI SOFTWARE 🛠️",
+            "software_subtitle": "Entornos y drivers de compilación:",
+            "main_title": "Can I Run Local AI? 🚀",
+            "main_description": "Evaluación automatizada de compatibilidad optimizada por Sistema Operativo.",
+            "search_placeholder": "🔍 Buscar modelos (ej. DeepSeek, Llama...)",
+            "guide_text": "💡 ¿Cómo ejecutar estos modelos? 1. Instala Ollama (para LLMs) o LM Studio. 2. Abre tu terminal y escribe: 'ollama run [nombre-modelo]' (ej: 'ollama run deepseek-r1:8b'). 3. Para generar imágenes, usa Stable Diffusion WebUI, ComfyUI o Draw Things.",
+            "guide_title": "Guía rápida",
+            "guide_hide": "Ocultar",
+            "guide_show": "Mostrar",
+            "scan_status_running": "Escaneando hardware y runtimes del sistema...",
+            "scan_status_success": "Sistema analizado correctamente",
+            "scan_status_error": "Error al escanear",
+            "database_searching": "Base de Datos: Buscando...",
+            "database_online": "Base de Datos: Online (Sincronizada)",
+            "database_offline": "Base de Datos: Offline (Local)",
+            "database_cached": "Base de Datos: Cache local",
+            "database_missing": "Base de Datos: Sin cache",
+            "scan_status_idle": "Listo para analizar el equipo",
+            "rescan": "🔄 Volver a Escanear",
+            "analyze": "🔎 Analizar equipo",
+            "scan_in_progress": "⌛ Escaneando...",
+            "loading_modal_title": "Analizando equipo",
+            "loading_modal_body": "Escaneando hardware, memoria, GPU y runtimes locales.\nEspera un momento...",
+            "empty_state_title": "Analiza tu equipo para ver compatibilidad",
+            "empty_state_body": "La aplicación puede cargar resultados desde cache o ejecutar un análisis nuevo cuando tú lo indiques.",
+            "recommend_title": "🏆 MODELOS TOP RECOMENDADOS PARA TU PC",
+            "empty_models": "No se encontraron modelos que coincidan con la búsqueda.",
+            "recommended_badge": "✨ RECOMENDADO PARA TU PC",
+            "python_not_detected": "Desconocida",
+            "python_env_default": "System",
+            "cuda_not_detected": "No Detectado",
+            "cuda_missing_support": "Sin GPU NVIDIA o Driver CUDA",
+            "rocm_not_detected": "No Detectado",
+            "rocm_missing_support": "Sin soporte AMD ROCm/HIP",
+            "compilers_missing": "Ninguno Detectado",
+            "compilers_missing_help": "Instala MSVC/GCC/Clang para construir de fuentes",
+            "compilers_ready": "Listos para compilar dependencias",
+            "gpu_none": "Sin GPU dedicada",
+            "gpu_none_help": "Usa gráficos integrados / CPU",
+            "ram_system": "Memoria del Sistema",
+            "ram_unified": "Memoria Unificada",
+            "memory_pool_label": "Memoria compartida/unificada | Pool",
+            "memory_reported_label": "VRAM reportada",
+            "vram_dedicated_label": "VRAM dedicada",
+            "cpu_architecture_label": "Arquitectura",
+            "cpu_cores_label": "Núcleos",
+            "cpu_threads_label": "hilos",
+            "cpu_physical_label": "físicos",
+            "cpu_avx2_label": "AVX2",
+            "avx2_yes": "Sí",
+            "avx2_no": "No",
+            "requirements_base_label": "Requisitos base",
+            "requirements_ram_cpu_label": "RAM (CPU)",
+            "cuda_supported_label": "CUDA Soportado",
+            "driver_label": "Driver",
+            "nvcc_missing": " (Sin NVCC)",
+            "rocm_detected": "ROCm/HIP Detectado",
+            "version_label": "Versión",
+            "clipboard_title": "Copiado",
+            "clipboard_body": "Copiado al portapapeles:\n\n{value}",
+            "command_copied_title": "Comando Copiado",
+            "command_copied_body": "Se copió el comando al portapapeles:\n\n{value}",
+            "terminal_missing_body": "No se encontró un emulador de terminal compatible.\nSe copió el comando al portapapeles:\n\n{value}",
+            "ollama_missing_title": "Ollama No Detectado",
+            "ollama_missing_body": "Ollama no parece estar instalado o configurado en tu PATH.\n\nPor favor, instala Ollama desde https://ollama.com antes de intentar ejecutar este modelo.",
+            "ollama_install_body": "No se encontró Ollama en este equipo.\n\nPuedes abrir la descarga oficial o copiar un comando de instalación recomendado para tu sistema operativo.",
+            "ollama_install_open_site": "Abrir descarga oficial",
+            "ollama_install_copy_command": "Copiar comando",
+            "ollama_install_close": "Cerrar",
+            "ollama_install_command_missing": "No hay un comando de instalación configurado para este sistema.\nSe abrirá la página oficial de descarga.",
+            "error_title": "Error",
+            "scan_error_body": "Ocurrió un error al detectar los recursos:\n{value}",
+            "terminal_open_error": "No se pudo abrir la terminal: {value}",
+            "image_guide_title": "Guía de Uso - {value}",
+            "image_guide_body": "Guía para ejecutar {value} localmente:\n\n1. Descarga el archivo del modelo (.safetensors) usando el botón de HuggingFace.\n2. Instala una interfaz compatible como:\n   - ComfyUI (Recomendado, muy rápido e intermedio)\n   - Draw Things (Excelente para macOS con CoreML/Metal)\n   - Automatic1111 (Estándar de la industria)\n3. Coloca el archivo descargado en la carpeta de modelos de tu interfaz (por ejemplo, 'models/Stable-diffusion' o 'models/checkpoints').\n4. Inicia la interfaz y selecciona el modelo para empezar a generar imágenes."
+        },
+        "UI_SPEC_CARDS": {
+            "os": {"title": "SISTEMA OPERATIVO"},
+            "cpu": {"title": "PROCESADOR (CPU)"},
+            "ram": {"title": "MEMORIA RAM"},
+            "gpu": {"title": "GRÁFICOS (GPU)"},
+            "python": {"title": "ENTORNO PYTHON"},
+            "cuda": {"title": "NVIDIA CUDA / DRIVER"},
+            "rocm": {"title": "AMD ROCm / HIP"},
+            "compilers": {"title": "COMPILADORES C++"}
+        },
+        "MODEL_STATUS_LABELS": {
+            "RUNS_GREAT": "Funciona Excelente",
+            "RUNS_WELL": "Funciona Bien",
+            "DECENT_SLOW": "Lento (CPU)",
+            "TIGHT_FIT": "Ajustado (Lento)",
+            "TOO_HEAVY": "Demasiado Pesado"
+        },
+        "MODEL_TEXT": {
+            "cpu_only_name": "CPU Only",
+            "image_category": "Image Generation",
+            "llm_category": "Text (LLM)",
+            "os_tip_image_nvidia": "🪟/🐧 CUDA ofrece el rendimiento óptimo y nativo para este modelo.",
+            "os_tip_image_nvidia_macos": "CUDA detectado.",
+            "os_tip_image_amd_windows": "🪟 En Windows (DirectML), AMD puede ser lento generando imágenes. Linux (ROCm) es mucho más rápido.",
+            "os_tip_image_amd_linux": "🐧 Excelente rendimiento nativo en Linux usando la arquitectura ROCm de AMD.",
+            "os_tip_image_apple": "🍎 Optimizado nativamente en Mac usando CoreML/Metal (Apps como Draw Things).",
+            "os_tip_llm_amd_windows": "🪟 Ollama usará Vulkan para tu gráfica AMD. Funciona bien, pero en Linux tendrías mayor velocidad.",
+            "os_tip_llm_nvidia_linux": "🐧 La combinación Linux + NVIDIA ofrece la menor latencia posible para LLMs locales.",
+            "os_tip_llm_windows_cpu": "🪟 Windows consume mucha RAM en segundo plano. Cierra navegadores pesados para liberar CPU/RAM.",
+            "os_tip_llm_apple": "🍎 Ollama aprovecha el framework MLX/Metal de Apple. Rendimiento espectacular y silencioso.",
+            "apple_details_great": "Carga completa en memoria unificada ({vram_needed}GB req, {total_ram}GB total). Muy rápido.",
+            "apple_details_well": "Cabe en memoria unificada, pero dejará poco espacio para macOS y otras apps.",
+            "apple_details_tight": "Al límite de la memoria unificada. Provocará swapping y ralentizará el Mac.",
+            "apple_details_heavy": "Requiere {vram_needed}GB. Tu Mac de {total_ram}GB no tiene memoria suficiente.",
+            "gpu_details_great": "Se ejecuta 100% en la GPU ({vendor}) usando {vram_needed}GB de VRAM.",
+            "gpu_details_well": "GPU VRAM ({max_vram}GB) comparte carga con la RAM. Funcionamiento fluido.",
+            "gpu_details_cpu_slow": "VRAM insuficiente. Se apoyará fuertemente en CPU/RAM. Será lento.",
+            "gpu_details_tight": "Cabe en la RAM pero de forma muy ajustada. Riesgo de cuelgues del sistema operativo.",
+            "gpu_details_heavy": "Demasiado pesado. Requiere ~{adjusted_ram_needed}GB libres (ajustado por OS).",
+            "cpu_details_decent": "Sin GPU dedicada. Correrá en CPU. Funcional pero a baja velocidad.",
+            "cpu_details_tight": "Ajustado al límite de la RAM. El sistema {system_os} podría congelarse temporalmente.",
+            "cpu_details_heavy": "Falta memoria RAM. Requiere ~{adjusted_ram_needed}GB para operar estable en CPU."
+        },
+        "search_categories": ["Todos", "Text (LLM)", "Image Generation"]
+    },
+    "en": {
+        "UI_TEXT": {
+            "sidebar_title": "MY HARDWARE 🖥️",
+            "sidebar_subtitle": "Detected resources on your machine:",
+            "software_title": "MY SOFTWARE 🛠️",
+            "software_subtitle": "Environments and build drivers:",
+            "main_title": "Can I Run Local AI? 🚀",
+            "main_description": "Automated compatibility evaluation optimized by OS.",
+            "search_placeholder": "🔍 Search models (e.g. DeepSeek, Llama...)",
+            "guide_text": "💡 How to run these models? 1. Install Ollama (for LLMs) or LM Studio. 2. Open terminal and run: 'ollama run [model-name]' (e.g.: 'ollama run deepseek-r1:8b'). 3. For images, use Stable Diffusion WebUI, ComfyUI, or Draw Things.",
+            "guide_title": "Quick guide",
+            "guide_hide": "Hide",
+            "guide_show": "Show",
+            "scan_status_running": "Scanning system hardware and runtimes...",
+            "scan_status_success": "System scanned successfully",
+            "scan_status_error": "Error scanning system",
+            "database_searching": "Database: Searching...",
+            "database_online": "Database: Online (Synced)",
+            "database_offline": "Database: Offline (Local)",
+            "database_cached": "Database: Local cache",
+            "database_missing": "Database: No cache",
+            "scan_status_idle": "Ready to analyze hardware",
+            "rescan": "🔄 Re-scan Hardware",
+            "analyze": "🔎 Analyze hardware",
+            "scan_in_progress": "⌛ Scanning...",
+            "loading_modal_title": "Analyzing system",
+            "loading_modal_body": "Scanning hardware, memory, GPU, and local runtimes.\nPlease wait...",
+            "empty_state_title": "Analyze your system to check compatibility",
+            "empty_state_body": "The app can load results from cache or run a new scan when you choose.",
+            "recommend_title": "🏆 TOP RECOMMENDED MODELS FOR YOUR PC",
+            "empty_models": "No models found matching the search query.",
+            "recommended_badge": "✨ RECOMMENDED FOR YOUR PC",
+            "python_not_detected": "Unknown",
+            "python_env_default": "System",
+            "cuda_not_detected": "Not Detected",
+            "cuda_missing_support": "No NVIDIA GPU or CUDA Driver",
+            "rocm_not_detected": "Not Detected",
+            "rocm_missing_support": "No AMD ROCm/HIP support",
+            "compilers_missing": "None Detected",
+            "compilers_missing_help": "Install MSVC/GCC/Clang to build from source",
+            "compilers_ready": "Ready to build dependencies",
+            "gpu_none": "No dedicated GPU",
+            "gpu_none_help": "Using integrated graphics / CPU",
+            "ram_system": "System Memory",
+            "ram_unified": "Unified Memory",
+            "memory_pool_label": "Shared/unified memory | Pool",
+            "memory_reported_label": "Reported VRAM",
+            "vram_dedicated_label": "dedicated VRAM",
+            "cpu_architecture_label": "Architecture",
+            "cpu_cores_label": "Cores",
+            "cpu_threads_label": "threads",
+            "cpu_physical_label": "physical",
+            "cpu_avx2_label": "AVX2",
+            "avx2_yes": "Yes",
+            "avx2_no": "No",
+            "requirements_base_label": "Base requirements",
+            "requirements_ram_cpu_label": "RAM (CPU)",
+            "cuda_supported_label": "CUDA Supported",
+            "driver_label": "Driver",
+            "nvcc_missing": " (No NVCC)",
+            "rocm_detected": "ROCm/HIP Detected",
+            "version_label": "Version",
+            "clipboard_title": "Copied",
+            "clipboard_body": "Copied to clipboard:\n\n{value}",
+            "command_copied_title": "Command Copied",
+            "command_copied_body": "Command copied to clipboard:\n\n{value}",
+            "terminal_missing_body": "No compatible terminal emulator found.\nCommand copied to clipboard:\n\n{value}",
+            "ollama_missing_title": "Ollama Not Detected",
+            "ollama_missing_body": "Ollama does not seem to be installed or configured in your PATH.\n\nPlease install Ollama from https://ollama.com before trying to run this model.",
+            "ollama_install_body": "Ollama was not found on this machine.\n\nYou can open the official download page or copy a recommended install command for your OS.",
+            "ollama_install_open_site": "Open official download",
+            "ollama_install_copy_command": "Copy command",
+            "ollama_install_close": "Close",
+            "ollama_install_command_missing": "No install command configured for this OS.\nOpening official download site.",
+            "error_title": "Error",
+            "scan_error_body": "An error occurred during resource detection:\n{value}",
+            "terminal_open_error": "Could not open terminal: {value}",
+            "image_guide_title": "Usage Guide - {value}",
+            "image_guide_body": "Guide to run {value} locally:\n\n1. Download the model file (.safetensors) using the HuggingFace button.\n2. Install a compatible UI such as:\n   - ComfyUI (Recommended, fast, and intermediate)\n   - Draw Things (Great for macOS with CoreML/Metal)\n   - Automatic1111 (Industry standard)\n3. Place the downloaded file in the models folder of your UI (e.g. 'models/Stable-diffusion' or 'models/checkpoints').\n4. Launch the UI and select the model to start generating images."
+        },
+        "UI_SPEC_CARDS": {
+            "os": {"title": "OPERATING SYSTEM"},
+            "cpu": {"title": "PROCESSOR (CPU)"},
+            "ram": {"title": "RAM MEMORY"},
+            "gpu": {"title": "GRAPHICS (GPU)"},
+            "python": {"title": "PYTHON ENVIRONMENT"},
+            "cuda": {"title": "NVIDIA CUDA / DRIVER"},
+            "rocm": {"title": "AMD ROCm / HIP"},
+            "compilers": {"title": "C++ COMPILERS"}
+        },
+        "MODEL_STATUS_LABELS": {
+            "RUNS_GREAT": "Runs Great",
+            "RUNS_WELL": "Runs Well",
+            "DECENT_SLOW": "Decent (Slow CPU)",
+            "TIGHT_FIT": "Tight Fit (Slow)",
+            "TOO_HEAVY": "Too Heavy"
+        },
+        "MODEL_TEXT": {
+            "cpu_only_name": "CPU Only",
+            "image_category": "Image Generation",
+            "llm_category": "Text (LLM)",
+            "os_tip_image_nvidia": "🪟/🐧 CUDA offers optimal native performance for this model.",
+            "os_tip_image_nvidia_macos": "CUDA detected.",
+            "os_tip_image_amd_windows": "🪟 On Windows (DirectML), AMD can be slow generating images. Linux (ROCm) is much faster.",
+            "os_tip_image_amd_linux": "🐧 Excellent native performance on Linux using AMD's ROCm architecture.",
+            "os_tip_image_apple": "🍎 Natively optimized on Mac using CoreML/Metal (Apps like Draw Things).",
+            "os_tip_llm_amd_windows": "🪟 Ollama will use Vulkan for your AMD card. Runs fine, but Linux is faster.",
+            "os_tip_llm_nvidia_linux": "🐧 The Linux + NVIDIA combo offers the lowest possible latency for local LLMs.",
+            "os_tip_llm_windows_cpu": "🪟 Windows consumes significant background RAM. Close heavy browsers to free CPU/RAM.",
+            "os_tip_llm_apple": "🍎 Ollama utilizes Apple's MLX/Metal framework. Spectacular, quiet performance.",
+            "apple_details_great": "Full load into unified memory ({vram_needed}GB req, {total_ram}GB total). Very fast.",
+            "apple_details_well": "Fits in unified memory, but leaves little room for macOS and other apps.",
+            "apple_details_tight": "At unified memory limits. Will cause swapping and slow down the Mac.",
+            "apple_details_heavy": "Requires {vram_needed}GB. Your {total_ram}GB Mac does not have enough memory.",
+            "gpu_details_great": "Runs 100% on GPU ({vendor}) using {vram_needed}GB of VRAM.",
+            "gpu_details_well": "GPU VRAM ({max_vram}GB) shares load with RAM. Smooth operation.",
+            "gpu_details_cpu_slow": "Insufficient VRAM. Will offload heavily to CPU/RAM. It will be slow.",
+            "gpu_details_tight": "Fits in RAM but very tight. Risk of OS freezes.",
+            "gpu_details_heavy": "Too heavy. Requires ~{adjusted_ram_needed}GB free (adjusted for OS).",
+            "cpu_details_decent": "No dedicated GPU. Runs on CPU. Functional but slow.",
+            "cpu_details_tight": "Tight RAM limits. The {system_os} system might freeze temporarily.",
+            "cpu_details_heavy": "Out of RAM. Requires ~{adjusted_ram_needed}GB for stable CPU operation."
+        },
+        "search_categories": ["All", "Text (LLM)", "Image Generation"]
+    }
+}
+
+
+class AppTextMixin:
+    def change_language(self, lang):
+        self.lang = lang
+        config.UI_TEXT.update(TRANSLATIONS[lang]["UI_TEXT"])
+        for key in config.UI_SPEC_CARDS:
+            if key in TRANSLATIONS[lang]["UI_SPEC_CARDS"]:
+                config.UI_SPEC_CARDS[key]["title"] = TRANSLATIONS[lang]["UI_SPEC_CARDS"][key]["title"]
+        config.MODEL_STATUS_LABELS.update(TRANSLATIONS[lang]["MODEL_STATUS_LABELS"])
+        config.MODEL_TEXT.update(TRANSLATIONS[lang]["MODEL_TEXT"])
+        config.UI_BASE["search_categories"] = TRANSLATIONS[lang]["search_categories"]
+
+    def _configure_typography(self):
+        default_font = self.ui_tokens["font_family"]
+        try:
+            tkfont.nametofont("TkDefaultFont").configure(
+                family=default_font,
+                size=UI_BASE["font_sizes"]["sidebar_text"],
+            )
+            tkfont.nametofont("TkTextFont").configure(
+                family=default_font,
+                size=UI_BASE["font_sizes"]["sidebar_text"],
+            )
+            tkfont.nametofont("TkMenuFont").configure(
+                family=default_font,
+                size=UI_BASE["font_sizes"]["sidebar_text_small"],
+            )
+        except Exception:
+            pass
+
+    def _font(self, token, weight=None, slant="roman"):
+        cache_key = (token, weight or "normal", slant)
+        if cache_key not in self.font_cache:
+            self.font_cache[cache_key] = ctk.CTkFont(
+                family=self.ui_tokens["font_family"],
+                size=UI_BASE["font_sizes"][token],
+                weight=weight or "normal",
+                slant=slant,
+            )
+        return self.font_cache[cache_key]
+
+    def _dynamic_wraplength(self, ratio, minimum, maximum):
+        current_width = max(self.winfo_width(), self.ui_tokens["initial_width"])
+        return max(minimum, min(maximum, int(current_width * ratio)))
+
+    def _wrap_text_to_pixels(self, text, font, max_width):
+        if not text or max_width <= 0:
+            return text
+
+        measure_font = tkfont.Font(font=font)
+        wrapped_lines = []
+        for paragraph in str(text).splitlines() or [""]:
+            words = paragraph.split()
+            if not words:
+                wrapped_lines.append("")
+                continue
+
+            current_line = words[0]
+            for word in words[1:]:
+                candidate = f"{current_line} {word}"
+                if measure_font.measure(candidate) <= max_width:
+                    current_line = candidate
+                else:
+                    wrapped_lines.append(current_line)
+                    current_line = word
+            wrapped_lines.append(current_line)
+
+        return "\n".join(wrapped_lines)
+
+    def _measure_text_width(self, font, text, horizontal_padding=0, minimum=0, maximum=None):
+        measured_width = tkfont.Font(font=font).measure(str(text)) + horizontal_padding
+        measured_width = max(minimum, measured_width)
+        if maximum is not None:
+            measured_width = min(maximum, measured_width)
+        return measured_width
+
+    def _bind_wrapped_text(self, container, label, font, horizontal_padding=0, minimum=10, maximum=None):
+        label._original_text = label.cget("text")
+
+        def _sync_text_wrap(event):
+            if event.widget is not container:
+                return
+            available_width = max(minimum, event.width - horizontal_padding)
+            if maximum is not None:
+                available_width = min(maximum, available_width)
+            wrapped_text = self._wrap_text_to_pixels(label._original_text, font, available_width)
+            label.configure(text=wrapped_text, wraplength=available_width, anchor="w", justify="left")
+
+        container.bind("<Configure>", _sync_text_wrap, add="+")
+
+    def _ctk_font_to_tk(self, ctk_font):
+        return tkfont.Font(
+            family=ctk_font.cget("family"),
+            size=ctk_font.cget("size"),
+            weight=ctk_font.cget("weight"),
+            slant=ctk_font.cget("slant"),
+        )
+
+    def _create_wrapped_message(self, parent, text, ctk_font, text_color, bg_color):
+        label = tk.Label(
+            parent,
+            text=text,
+            font=self._ctk_font_to_tk(ctk_font),
+            fg=text_color,
+            bg=bg_color,
+            justify="left",
+            anchor="w",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=0,
+            pady=0,
+        )
+        label._original_text = text
+        return label
+
+    def _bind_message_width(self, container, message_widget, font=None, horizontal_padding=0, minimum=10, maximum=None):
+        if isinstance(message_widget, (ctk.CTkLabel, tk.Label)):
+            self._bind_wrapped_text(
+                container,
+                message_widget,
+                font or message_widget.cget("font"),
+                horizontal_padding=horizontal_padding,
+                minimum=minimum,
+                maximum=maximum,
+            )
+            return
+
+        def _sync_message_width(event):
+            if event.widget is not container:
+                return
+            available_width = max(minimum, event.width - horizontal_padding)
+            if maximum is not None:
+                available_width = min(maximum, available_width)
+            message_widget.configure(width=available_width)
+
+        container.bind("<Configure>", _sync_message_width, add="+")
+
+    def _bind_label_to_container_width(self, container, labels, horizontal_padding=0, minimum=10, maximum=None):
+        if not isinstance(labels, (list, tuple)):
+            labels = [labels]
+
+        def _sync_wraplength(event):
+            if event.widget is not container:
+                return
+            available_width = max(minimum, event.width - horizontal_padding)
+            if maximum is not None:
+                available_width = min(maximum, available_width)
+            for label in labels:
+                label.configure(wraplength=available_width, anchor="w", justify="left")
+
+        container.bind("<Configure>", _sync_wraplength, add="+")

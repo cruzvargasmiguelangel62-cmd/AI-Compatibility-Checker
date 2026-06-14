@@ -39,4 +39,7 @@ venv.bak/
 *.sln
 *.sw?
 
+# Cache
+data/hw_cache.json
+
 
