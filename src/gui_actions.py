@@ -209,14 +209,18 @@ class AppActionsMixin:
         self.clipboard_append(text)
         self.update()
         
-        # Format the display text if it's a long report or has multiple lines
-        if len(text) > 120 or "\n" in text:
-            msg = "¡Especificaciones de hardware copiadas con éxito al portapapeles! Listo para compartir."
-            if getattr(self, "active_language", "es") == "en":
-                msg = "Hardware specifications successfully copied to clipboard! Ready to share."
-            messagebox.showinfo(UI_TEXT["clipboard_title"], msg)
-        else:
-            messagebox.showinfo(UI_TEXT["clipboard_title"], UI_TEXT["clipboard_body"].format(value=text))
+        # Format the display text by stripping raw markdown symbols for the dialog view
+        import re
+        display_text = text
+        if text.startswith("#") or "**" in text:
+            # Remove header markers (#, ##, etc.)
+            display_text = re.sub(r"^#+\s*", "", display_text, flags=re.MULTILINE)
+            # Remove bold markers (**)
+            display_text = display_text.replace("**", "")
+            # Convert list hyphens to bullets
+            display_text = re.sub(r"^-\s*", "• ", display_text, flags=re.MULTILINE)
+            
+        messagebox.showinfo(UI_TEXT["clipboard_title"], UI_TEXT["clipboard_body"].format(value=display_text))
 
     def open_download_url(self, url):
         webbrowser.open(url)
