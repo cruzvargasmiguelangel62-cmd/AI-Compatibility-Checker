@@ -159,7 +159,7 @@ class AppLayoutMixin:
 
         self.cards_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.cards_frame.pack(fill="both", expand=True, padx=sidebar_inner_padding, pady=0)
-        for key in ("os", "cpu", "ram", "gpu"):
+        for key in ("os", "cpu", "ram", "gpu", "disk"):
             card = self.create_spec_card(self.cards_frame, **UI_SPEC_CARDS[key])
             setattr(self, f"{key}_card", card)
             card.pack(fill="x", pady=3)
@@ -190,7 +190,7 @@ class AppLayoutMixin:
         # Settings section
         self.settings_title = ctk.CTkLabel(
             self.sidebar,
-            text="SIMULACIÓN LOCAL ⚙" if self.active_language == "es" else "LOCAL SIMULATION ⚙",
+            text=UI_TEXT["settings_title"],
             font=self._font("sidebar_title", weight="bold"),
             text_color=self.text_primary,
         )
@@ -202,7 +202,7 @@ class AppLayoutMixin:
         # Quantization Dropdown
         self.quant_label = ctk.CTkLabel(
             self.settings_frame,
-            text="Cuantización" if self.active_language == "es" else "Quantization",
+            text=UI_TEXT["quant_label"],
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_muted,
         )
@@ -227,7 +227,7 @@ class AppLayoutMixin:
         # Context Size Dropdown
         self.context_label = ctk.CTkLabel(
             self.settings_frame,
-            text="Contexto (KV Cache)" if self.active_language == "es" else "Context (KV Cache)",
+            text=UI_TEXT["context_label"],
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_muted,
         )
@@ -277,7 +277,7 @@ class AppLayoutMixin:
         # Copy specs button
         self.copy_specs_btn = ctk.CTkButton(
             self.settings_frame,
-            text="📋 Copiar Especificaciones" if self.active_language == "es" else "📋 Copy Specifications",
+            text=UI_TEXT["copy_specs_btn"],
             font=self._font("sidebar_text_small", weight="bold"),
             fg_color=UI_COLORS["button_dark"],
             hover_color=UI_COLORS["button_dark_hover"],
@@ -293,7 +293,15 @@ class AppLayoutMixin:
             font=self._font("sidebar_text_small", slant="italic"),
             text_color=UI_COLORS["success"],
         )
-        self.scan_status_label.pack(padx=sidebar_edge_padding, pady=(8, 2), fill="x")
+        self.scan_status_label.pack(padx=sidebar_edge_padding, pady=(8, 0), fill="x")
+
+        self.last_scan_label = ctk.CTkLabel(
+            self.sidebar,
+            text="",
+            font=self._font("sidebar_text_small", slant="italic"),
+            text_color=UI_COLORS["text_subtle"],
+        )
+        self.last_scan_label.pack(padx=sidebar_edge_padding, pady=(0, 2), fill="x")
 
         self.sidebar_buttons = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.sidebar_buttons.pack(fill="x", padx=sidebar_edge_padding, pady=(12, 16))
@@ -344,7 +352,7 @@ class AppLayoutMixin:
 
         self.ollama_status_label = ctk.CTkLabel(
             self.ollama_status_card,
-            text="Ollama API: Inactivo" if self.active_language == "es" else "Ollama API: Offline",
+            text=UI_TEXT["ollama_api_offline"],
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_primary,
         )
@@ -539,6 +547,18 @@ class AppLayoutMixin:
             self.db_status_dot.configure(text_color=UI_COLORS["warning"])
             self.db_status_label.configure(text=UI_TEXT["database_offline"])
 
+        # Show last scan age
+        if hasattr(self, "last_scan_label"):
+            from src.cache import cache_info
+            info = cache_info()
+            if info:
+                minutes = max(0, int(info["age_seconds"] // 60))
+                self.last_scan_label.configure(
+                    text=UI_TEXT["last_scan_label"].format(minutes=minutes)
+                )
+            else:
+                self.last_scan_label.configure(text=UI_TEXT["last_scan_never"])
+
         hw_specs = self.specs.get("hardware", self.specs)
         sw_specs = self.specs.get("software", {})
         for child in self.rec_frame.winfo_children():
@@ -628,9 +648,13 @@ class AppLayoutMixin:
         ram_installed = hw_specs.get("ram_installed", ram_val)
         ram_desc = UI_TEXT["ram_unified"] if hw_specs.get("is_apple_silicon") else UI_TEXT["ram_system"]
         if ram_installed > ram_val and not hw_specs.get("is_apple_silicon"):
-            ram_desc = f"Usable ({ram_installed} GB física)"
+            ram_desc = UI_TEXT["ram_usable_label"].format(installed=ram_installed)
         self.ram_card.val_label.configure(text=f"{ram_val} GB RAM")
         self.ram_card.sub_label.configure(text=ram_desc)
+
+        disk_val = hw_specs.get("free_disk", 0.0)
+        self.disk_card.val_label.configure(text=f"{disk_val:.1f} GB")
+        self.disk_card.sub_label.configure(text=UI_TEXT["disk_subtitle"].format(free_disk=disk_val))
 
         gpus = hw_specs.get("gpus", [])
         if not gpus:
@@ -656,7 +680,7 @@ class AppLayoutMixin:
         py_env = py_info.get("env_type", UI_TEXT["python_env_default"])
         py_arch = py_info.get("arch", "")
         self.python_card.val_label.configure(text=f"Python {py_ver} ({py_arch})")
-        self.python_card.sub_label.configure(text=f"Entorno: {py_env}")
+        self.python_card.sub_label.configure(text=f"{UI_TEXT['version_label']}: {py_env}")
 
         cuda_info = sw_specs.get("cuda", {})
         if cuda_info.get("available"):
@@ -845,7 +869,7 @@ class AppLayoutMixin:
         support_frame.grid(row=0, column=1, sticky="ne")
         support_frame.grid_columnconfigure(0, weight=1)
 
-        disk_space_text = "Disco" if self.active_language == "es" else "Disk"
+        disk_space_text = UI_TEXT["disk_label"]
         req_text = f"{UI_TEXT['requirements_base_label']}: {model['vram_q4']} GB VRAM"
         if model["category"] == config.MODEL_TEXT["llm_category"]:
             req_text += f" | {model['ram_q4']} GB {UI_TEXT['requirements_ram_cpu_label']}"
@@ -935,7 +959,7 @@ class AppLayoutMixin:
             if is_installed:
                 btn_run = ctk.CTkButton(
                     actions_frame,
-                    text="⚡ Ejecutar" if self.active_language == "es" else "⚡ Run",
+                    text=UI_TEXT["btn_run"],
                     font=self._font("action", weight="bold"),
                     fg_color=UI_COLORS["button_green"],
                     hover_color=UI_COLORS["button_green_hover"],
@@ -948,7 +972,7 @@ class AppLayoutMixin:
 
                 lbl_installed = ctk.CTkLabel(
                     actions_frame,
-                    text="✓ Instalado" if self.active_language == "es" else "✓ Installed",
+                    text=UI_TEXT["btn_installed"],
                     font=self._font("model_tip", weight="bold"),
                     text_color=UI_COLORS["success"],
                 )
@@ -971,7 +995,7 @@ class AppLayoutMixin:
 
                 btn_download = ctk.CTkButton(
                     actions_frame,
-                    text="📥 Descargar" if self.active_language == "es" else "📥 Download",
+                    text=UI_TEXT["btn_download"],
                     font=self._font("action", weight="bold"),
                     fg_color=UI_COLORS["button_blue"],
                     hover_color=UI_COLORS["button_blue_hover"],
@@ -984,7 +1008,7 @@ class AppLayoutMixin:
 
                 btn_copy = ctk.CTkButton(
                     actions_frame,
-                    text="📋 Copiar" if self.active_language == "es" else "📋 Copy",
+                    text=UI_TEXT["btn_copy"],
                     font=self._font("action"),
                     fg_color=UI_COLORS["button_dark"],
                     hover_color=UI_COLORS["button_dark_hover"],
@@ -1011,7 +1035,7 @@ class AppLayoutMixin:
 
             btn_guide = ctk.CTkButton(
                 actions_frame,
-                text="💡 Guía SD/Flux" if self.active_language == "es" else "💡 SD/Flux Guide",
+                text=UI_TEXT["btn_guide"],
                 font=self._font("action"),
                 fg_color=UI_COLORS["button_dark"],
                 hover_color=UI_COLORS["button_dark_hover"],
@@ -1117,13 +1141,13 @@ class AppLayoutMixin:
         
         # Update settings labels
         if hasattr(self, "settings_title"):
-            self.settings_title.configure(text="SIMULACIÓN LOCAL ⚙" if self.active_language == "es" else "LOCAL SIMULATION ⚙")
-            self.quant_label.configure(text="Cuantización" if self.active_language == "es" else "Quantization")
-            self.context_label.configure(text="Contexto (KV Cache)" if self.active_language == "es" else "Context (KV Cache)")
-            self.copy_specs_btn.configure(text="📋 Copiar Especificaciones" if self.active_language == "es" else "📋 Copy Specifications")
+            self.settings_title.configure(text=UI_TEXT["settings_title"])
+            self.quant_label.configure(text=UI_TEXT["quant_label"])
+            self.context_label.configure(text=UI_TEXT["context_label"])
+            self.copy_specs_btn.configure(text=UI_TEXT["copy_specs_btn"])
             
         # Update spec card titles in place
-        for key in ("os", "cpu", "ram", "gpu", "python", "cuda", "rocm", "compilers"):
+        for key in ("os", "cpu", "ram", "gpu", "disk", "python", "cuda", "rocm", "compilers"):
             card = getattr(self, f"{key}_card", None)
             if card and hasattr(card, "cat_label"):
                 title = config.UI_SPEC_CARDS[key]["title"]
@@ -1132,3 +1156,22 @@ class AppLayoutMixin:
                 
         # Re-populate segment button values
         self.category_selector.configure(values=config.UI_BASE["search_categories"])
+
+        # Update Ollama status label text (preserves color, just refreshes wording)
+        if hasattr(self, "ollama_status_label"):
+            is_online = getattr(self, "ollama_api_online", False)
+            self.ollama_status_label.configure(
+                text=config.UI_TEXT["ollama_api_online"] if is_online else config.UI_TEXT["ollama_api_offline"]
+            )
+
+        # Refresh last scan timestamp label
+        if hasattr(self, "last_scan_label"):
+            from src.cache import cache_info
+            info = cache_info()
+            if info:
+                minutes = max(0, int(info["age_seconds"] // 60))
+                self.last_scan_label.configure(
+                    text=config.UI_TEXT["last_scan_label"].format(minutes=minutes)
+                )
+            else:
+                self.last_scan_label.configure(text=config.UI_TEXT["last_scan_never"])

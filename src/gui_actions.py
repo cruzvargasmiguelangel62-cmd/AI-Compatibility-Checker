@@ -300,11 +300,11 @@ class AppActionsMixin:
         t.start()
 
     def start_ollama_download(self, tag, progress_bar, status_label, download_btn):
-        download_btn.configure(state="disabled", text="Descargando...")
+        download_btn.configure(state="disabled", text=UI_TEXT["download_in_progress"])
         status_label.grid()
         progress_bar.grid()
         progress_bar.set(0)
-        
+
         def on_progress(completed, total, status):
             if total > 0:
                 pct = completed / total
@@ -312,16 +312,16 @@ class AppActionsMixin:
                 status_label.configure(text=f"{status} ({pct*100:.1f}%)")
             else:
                 status_label.configure(text=status)
-                
+
         def on_complete(success, err):
             if success:
-                status_label.configure(text="¡Instalado!", text_color=config.UI_COLORS["success"])
+                status_label.configure(text=UI_TEXT["download_success"], text_color=config.UI_COLORS["success"])
                 progress_bar.grid_remove()
                 download_btn.pack_forget()
                 # Trigger a refresh of installed models list and GUI redraw
                 self.refresh_installed_ollama_models()
             else:
-                status_label.configure(text=f"Error: {err}", text_color=config.UI_COLORS["danger"])
-                download_btn.configure(state="normal", text="Reintentar")
-                
+                status_label.configure(text=f"{UI_TEXT['error_title']}: {err}", text_color=config.UI_COLORS["danger"])
+                download_btn.configure(state="normal", text=UI_TEXT["download_retry"])
+
         self.pull_ollama_model_async(tag, on_progress, on_complete)

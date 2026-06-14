@@ -389,17 +389,21 @@ UI_TEXT = {
         "UI_TEXT_IMAGE_GUIDE_BODY",
         "Guía para ejecutar {value} localmente:\n\n1. Descarga el archivo del modelo (.safetensors) usando el botón de HuggingFace.\n2. Instala una interfaz compatible como:\n   - ComfyUI (Recomendado, muy rápido e intermedio)\n   - Draw Things (Excelente para macOS con CoreML/Metal)\n   - Automatic1111 (Estándar de la industria)\n3. Coloca el archivo descargado en la carpeta de modelos de tu interfaz (por ejemplo, 'models/Stable-diffusion' o 'models/checkpoints').\n4. Inicia la interfaz y selecciona el modelo para empezar a generar imágenes.",
     ),
+    "disk_label": _get_str("UI_TEXT_DISK_LABEL", "Disco"),
+    "disk_subtitle": _get_str("UI_TEXT_DISK_SUBTITLE", "{free_disk} GB libres"),
+    "disk_warning": _get_str("UI_TEXT_DISK_WARNING", "⚠️ Falta disco: se requieren {disk_needed:.1f} GB pero solo quedan {free_disk:.1f} GB libres"),
 }
 
 UI_SPEC_CARDS = {
-    "os": {"title": _get_str("UI_CARD_OS_TITLE", "SISTEMA OPERATIVO"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_OS_ICON", "💻")},
-    "cpu": {"title": _get_str("UI_CARD_CPU_TITLE", "PROCESADOR (CPU)"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CPU_ICON", "🧠")},
-    "ram": {"title": _get_str("UI_CARD_RAM_TITLE", "MEMORIA RAM"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_RAM_ICON", "💾")},
-    "gpu": {"title": _get_str("UI_CARD_GPU_TITLE", "GRÁFICOS (GPU)"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_GPU_ICON", "⚡")},
-    "python": {"title": _get_str("UI_CARD_PYTHON_TITLE", "ENTORNO PYTHON"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_PYTHON_ICON", "🐍")},
-    "cuda": {"title": _get_str("UI_CARD_CUDA_TITLE", "NVIDIA CUDA / DRIVER"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CUDA_ICON", "💚")},
-    "rocm": {"title": _get_str("UI_CARD_ROCM_TITLE", "AMD ROCm / HIP"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_ROCM_ICON", "❤️")},
-    "compilers": {"title": _get_str("UI_CARD_COMPILERS_TITLE", "COMPILADORES C++"), "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_COMPILERS_ICON", "🔧")},
+    "os":        {"title": _get_str("UI_CARD_OS_TITLE",        "SISTEMA OPERATIVO"),   "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_OS_ICON",        "💻")},
+    "cpu":       {"title": _get_str("UI_CARD_CPU_TITLE",       "PROCESADOR (CPU)"),    "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CPU_ICON",       "🧠")},
+    "ram":       {"title": _get_str("UI_CARD_RAM_TITLE",       "MEMORIA RAM"),         "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_RAM_ICON",       "💾")},
+    "gpu":       {"title": _get_str("UI_CARD_GPU_TITLE",       "GRÁFICOS (GPU)"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_GPU_ICON",       "⚡")},
+    "disk":      {"title": _get_str("UI_CARD_DISK_TITLE",      "ALMACENAMIENTO"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_DISK_ICON",      "📁")},
+    "python":    {"title": _get_str("UI_CARD_PYTHON_TITLE",    "ENTORNO PYTHON"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_PYTHON_ICON",    "🐍")},
+    "cuda":      {"title": _get_str("UI_CARD_CUDA_TITLE",      "NVIDIA CUDA / DRIVER"),"value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CUDA_ICON",      "💚")},
+    "rocm":      {"title": _get_str("UI_CARD_ROCM_TITLE",      "AMD ROCm / HIP"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_ROCM_ICON",       "❤️")},
+    "compilers": {"title": _get_str("UI_CARD_COMPILERS_TITLE", "COMPILADORES C++"),    "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_COMPILERS_ICON", "🔧")},
 }
 
 UI_ACTIONS = {

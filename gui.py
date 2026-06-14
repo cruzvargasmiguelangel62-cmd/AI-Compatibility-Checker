@@ -269,12 +269,10 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
     def _update_ollama_status_gui(self, online, models):
         self.ollama_api_online = online
         self.installed_ollama_models = models
-        if hasattr(self, "db_status_dot"):  # use database indicator to show Ollama status as well
+        if hasattr(self, "db_status_dot"):
             dot_color = UI_COLORS["success"] if online else UI_COLORS["danger"]
-            label_text = "Ollama API: Activo" if online else "Ollama API: Inactivo"
-            if self.active_language == "en":
-                label_text = "Ollama API: Online" if online else "Ollama API: Offline"
-                
+            label_text = UI_TEXT["ollama_api_online"] if online else UI_TEXT["ollama_api_offline"]
+
             if hasattr(self, "ollama_status_dot"):
                 self.ollama_status_dot.configure(text_color=dot_color)
                 self.ollama_status_label.configure(text=label_text)

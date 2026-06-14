@@ -415,7 +415,9 @@ def evaluate_compatibility(
         disk_needed = vram_needed
         has_disk_space = free_disk >= disk_needed
         if not has_disk_space:
-            details += f" (⚠️ Falta disco: se requieren {disk_needed:.1f} GB pero solo quedan {free_disk:.1f} GB libres)"
+            details += " (" + config.MODEL_TEXT["disk_warning"].format(
+                disk_needed=disk_needed, free_disk=free_disk
+            ) + ")"
 
         # -- Build OS/GPU tip --
         os_tip = _build_os_tip(
