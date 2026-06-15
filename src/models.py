@@ -126,7 +126,9 @@ def _fetch_remote(url: str, timeout: Optional[int] = None) -> Optional[list[dict
     request_timeout = timeout or config.ONLINE_MODELS_TIMEOUT_SECONDS
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=request_timeout) as resp:
+        import ssl
+        context = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, timeout=request_timeout, context=context) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         if isinstance(data, list) and data:
             return data

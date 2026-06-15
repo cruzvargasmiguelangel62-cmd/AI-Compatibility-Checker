@@ -28,7 +28,9 @@ def update_models_catalog() -> dict:
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=8) as resp:
+        import ssl
+        context = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, timeout=8, context=context) as resp:
             models_data = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         return {"success": False, "error": str(e), "added": 0, "total": 0}
