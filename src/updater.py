@@ -158,5 +158,7 @@ def update_models_catalog() -> dict:
         for path in [models_path, models_online_path]:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(existing_models, f, ensure_ascii=False, indent=2)
+        from .models import clear_models_cache
+        clear_models_cache()
 
     return {"success": True, "added": added_count, "total": len(existing_models)}

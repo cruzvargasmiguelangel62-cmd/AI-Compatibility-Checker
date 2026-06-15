@@ -88,21 +88,45 @@ class AppLayoutMixin:
             self.guide_toggle_btn.configure(text=UI_TEXT["guide_show"])
 
     def _bind_mousewheel_to_frame(self, frame):
-        def _on_mousewheel(event):
-            if event.num == 4 or event.delta > 0:
-                frame._parent_canvas.yview_scroll(-5, "units")
-            elif event.num == 5 or event.delta < 0:
-                frame._parent_canvas.yview_scroll(5, "units")
-
-        frame.bind("<Button-4>", _on_mousewheel, add="+")
-        frame.bind("<Button-5>", _on_mousewheel, add="+")
-        frame.bind("<MouseWheel>", _on_mousewheel, add="+")
+        self._bind_mousewheel_recursive(frame, frame)
         try:
-            frame._parent_canvas.bind("<Button-4>", _on_mousewheel, add="+")
-            frame._parent_canvas.bind("<Button-5>", _on_mousewheel, add="+")
-            frame._parent_canvas.bind("<MouseWheel>", _on_mousewheel, add="+")
+            def _on_canvas_mousewheel(event):
+                if getattr(self, "is_closing", False):
+                    return
+                if event.num == 4 or event.delta > 0:
+                    frame._parent_canvas.yview_scroll(-5, "units")
+                elif event.num == 5 or event.delta < 0:
+                    frame._parent_canvas.yview_scroll(5, "units")
+            frame._parent_canvas.bind("<Button-4>", _on_canvas_mousewheel, add="+")
+            frame._parent_canvas.bind("<Button-5>", _on_canvas_mousewheel, add="+")
+            frame._parent_canvas.bind("<MouseWheel>", _on_canvas_mousewheel, add="+")
         except Exception:
             pass
+
+    def _bind_mousewheel_recursive(self, widget, frame):
+        if getattr(self, "is_closing", False):
+            return
+
+        def _on_mousewheel(event):
+            if getattr(self, "is_closing", False):
+                return
+            try:
+                if event.num == 4 or event.delta > 0:
+                    frame._parent_canvas.yview_scroll(-5, "units")
+                elif event.num == 5 or event.delta < 0:
+                    frame._parent_canvas.yview_scroll(5, "units")
+            except Exception:
+                pass
+
+        if hasattr(frame, "_scrollbar") and widget == frame._scrollbar:
+            return
+
+        widget.bind("<Button-4>", _on_mousewheel, add="+")
+        widget.bind("<Button-5>", _on_mousewheel, add="+")
+        widget.bind("<MouseWheel>", _on_mousewheel, add="+")
+
+        for child in widget.winfo_children():
+            self._bind_mousewheel_recursive(child, frame)
 
     def create_layout(self):
         self.grid_columnconfigure(0, weight=0, minsize=self.ui_tokens["sidebar_width"])
@@ -124,8 +148,8 @@ class AppLayoutMixin:
         )
         self.sidebar._scrollbar.configure(width=8, corner_radius=4)
         self.sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-        self._bind_mousewheel_to_frame(self.sidebar)
         self.build_sidebar()
+        self._bind_mousewheel_to_frame(self.sidebar)
 
         self.main_container = ctk.CTkFrame(self, corner_radius=0, fg_color=self.bg_color)
         self.main_container.grid(
@@ -579,13 +603,12 @@ class AppLayoutMixin:
         self._bind_mousewheel_to_frame(self.scroll_frame)
 
         self.guide_frame = ctk.CTkFrame(
-            self.main_container,
+            self.scroll_frame,
             fg_color=UI_COLORS["guide_background"],
             border_color=UI_COLORS["guide_border"],
             border_width=1,
             corner_radius=10,
         )
-        self.guide_frame.grid(row=4, column=0, sticky="ew", pady=(self.ui_tokens["section_gap"], 0))
         self.guide_frame.grid_columnconfigure(0, weight=1)
         self.guide_frame.grid_columnconfigure(1, weight=0)
 
@@ -622,6 +645,7 @@ class AppLayoutMixin:
         self.guide_label.grid(row=1, column=0, columnspan=2, sticky="ew", padx=12, pady=(0, 12))
         self._bind_wrapped_text(self.guide_frame, self.guide_label, self._font("guide"), horizontal_padding=48, minimum=160)
         self._update_guide_visibility()
+        self._bind_mousewheel_recursive(self.guide_frame, self.scroll_frame)
 
     def update_scan_results(self, from_cache=False):
         if self.is_closing or not self.winfo_exists():
@@ -839,6 +863,9 @@ class AppLayoutMixin:
         for row in self.model_row_widgets:
             if row.winfo_manager():
                 row.pack_forget()
+
+        if hasattr(self, "guide_frame") and self.guide_frame.winfo_manager():
+            self.guide_frame.pack_forget()
         
         # Pack the ones that match the filter
         for row in self.model_row_widgets:
@@ -846,6 +873,9 @@ class AppLayoutMixin:
                 continue
             if self._model_matches_filter(row.model):
                 row.pack(fill="x", pady=4, ipady=2)
+
+        if hasattr(self, "guide_frame"):
+            self.guide_frame.pack(fill="x", pady=(12, 4))
         
         self._update_empty_state()
 
@@ -904,6 +934,9 @@ class AppLayoutMixin:
             except Exception:
                 pass
             self.no_results_label = None
+
+        if hasattr(self, "guide_frame") and self.guide_frame.winfo_manager():
+            self.guide_frame.pack_forget()
 
         self.pending_models = list(self.rated_models)
         self._schedule_widgets_destruction()
@@ -965,6 +998,9 @@ class AppLayoutMixin:
 
         if self.pending_models:
             self.render_job = self.after(20, self._render_model_batch)
+        else:
+            if hasattr(self, "guide_frame"):
+                self.guide_frame.pack(fill="x", pady=(12, 4))
 
     def create_model_row(self, parent, model):
         is_rec = model.get("recommended", False)
@@ -1127,6 +1163,7 @@ class AppLayoutMixin:
         exp_frame.bind("<Configure>", _sync_exp_wraplength, add="+")
 
         self._render_model_actions(support_frame, model, exp_frame)
+        self._bind_mousewheel_recursive(row, self.scroll_frame)
         return row
 
     def _render_model_actions(self, support_frame, model, resize_container=None):

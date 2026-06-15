@@ -19,7 +19,8 @@ class AppActionsMixin:
             child.destroy()
         if hasattr(self, "scroll_frame"):
             for child in self.scroll_frame.winfo_children():
-                child.destroy()
+                if child != getattr(self, "guide_frame", None):
+                    child.destroy()
             title = ctk.CTkLabel(
                 self.scroll_frame,
                 text=UI_TEXT["empty_state_title"],
@@ -36,6 +37,8 @@ class AppActionsMixin:
                 justify="center",
             )
             body.pack(pady=(0, 12))
+            if hasattr(self, "guide_frame"):
+                self.guide_frame.pack(fill="x", pady=(12, 4))
 
     def show_loading_modal(self, title_text=None, body_text=None):
         if self.loading_modal is not None and self.loading_modal.winfo_exists():

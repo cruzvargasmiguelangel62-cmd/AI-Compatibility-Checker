@@ -23,7 +23,7 @@ from typing import Optional
 
 from . import config
 
-__all__ = ["evaluate_compatibility", "load_models_data", "RatedModel"]
+__all__ = ["evaluate_compatibility", "load_models_data", "RatedModel", "clear_models_cache"]
 
 log = logging.getLogger(__name__)
 
@@ -185,6 +185,10 @@ def load_models_data() -> tuple[list[dict], bool]:
     return [], False
 
 
+def clear_models_cache() -> None:
+    load_models_data.cache_clear()
+
+
 # ---------------------------------------------------------------------------
 # OS / GPU tip generation
 # ---------------------------------------------------------------------------
@@ -339,6 +343,7 @@ def evaluate_compatibility(
     specs: dict,
     quantization: str = "Q4_K_M",
     context_size: int = 8,
+    extra_models: list[dict] = None,
 ) -> tuple[list[RatedModel], bool]:
     """
     Evaluate every model in the database against the given hardware *specs*.
@@ -379,7 +384,14 @@ def evaluate_compatibility(
     from .detector import get_free_disk_space_gb
     free_disk = get_free_disk_space_gb(disk_check_path)
 
-    models_db, is_online = load_models_data()
+    models_db_cached, is_online = load_models_data()
+    models_db = list(models_db_cached)
+    if extra_models:
+        existing_ids = {m["id"] for m in models_db}
+        for em in extra_models:
+            if em["id"] not in existing_ids:
+                models_db.append(em)
+
     rated: list[RatedModel] = []
     quant_mult = QUANT_MULTIPLIERS.get(quantization, 1.0)
 

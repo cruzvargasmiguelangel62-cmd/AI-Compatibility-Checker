@@ -80,6 +80,95 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                 normalized.append(model)
         return normalized
 
+    def _get_local_extra_models(self) -> list[dict]:
+        extra_models = []
+        if not self.ollama_api_online or not self.installed_ollama_models:
+            return extra_models
+
+        from src.models import load_models_data
+        try:
+            models_db, _ = load_models_data()
+        except Exception:
+            models_db = []
+        
+        existing_tags = set()
+        for m in models_db:
+            tag = m.get("ollama_tag")
+            if tag:
+                existing_tags.add(tag.lower())
+
+        import re
+        for tag in self.installed_ollama_models:
+            tag_lower = tag.lower()
+            
+            is_matched = False
+            for ext_tag in existing_tags:
+                if tag_lower == ext_tag or f"{tag_lower}:" in f"{ext_tag}:" or f"{ext_tag}:" in f"{tag_lower}:":
+                    is_matched = True
+                    break
+            
+            if not is_matched:
+                params_match = re.search(r"([0-9.]+)\s*([bBmM])", tag)
+                params_b = 8.0
+                if params_match:
+                    try:
+                        val = float(params_match.group(1))
+                        unit = params_match.group(2).lower()
+                        if unit == 'b':
+                            params_b = val
+                        elif unit == 'm':
+                            params_b = val / 1000.0
+                    except ValueError:
+                        pass
+                else:
+                    if "7b" in tag_lower:
+                        params_b = 7.0
+                    elif "8b" in tag_lower:
+                        params_b = 8.0
+                    elif "70b" in tag_lower:
+                        params_b = 70.0
+                    elif "1.5b" in tag_lower:
+                        params_b = 1.5
+                    elif "3b" in tag_lower:
+                        params_b = 3.0
+                    elif "13b" in tag_lower:
+                        params_b = 13.0
+                    elif "32b" in tag_lower:
+                        params_b = 32.0
+
+                vram_est = round(params_b * 0.6 + 0.5, 1)
+                ram_est = round(params_b * 0.95 + 1.0, 1)
+                
+                clean_name = tag.split(":")[0].replace("-", " ").replace("_", " ").title()
+                if ":" in tag:
+                    clean_name += f" ({tag.split(':')[1]})"
+
+                extra_models.append({
+                    "id": f"local_{tag.replace(':', '_').replace('-', '_').lower()}",
+                    "name": clean_name,
+                    "category": "Text (LLM)",
+                    "params": f"{params_b} Billion" if params_b >= 0.1 else f"{int(params_b * 1000)} Million",
+                    "context": "8K ctx",
+                    "vram_q4": vram_est,
+                    "ram_q4": ram_est,
+                    "description": f"Modelo local detectado en tu instancia de Ollama.",
+                    "provider": "Ollama (Local)",
+                    "ollama_tag": tag
+                })
+        return extra_models
+
+    def evaluate_compatibility_with_local(self):
+        if self.specs is None:
+            return [], False
+        
+        extra = self._get_local_extra_models()
+        return evaluate_compatibility(
+            self.specs,
+            quantization=self.active_quantization,
+            context_size=self.active_context_size,
+            extra_models=extra
+        )
+
     def load_cached_snapshot(self):
         cached_snapshot = get_cached_snapshot()
         if cached_snapshot is None:
@@ -90,11 +179,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             return
 
         self.specs = cached_snapshot
-        rated_models, self.online_mode = evaluate_compatibility(
-            self.specs,
-            quantization=self.active_quantization,
-            context_size=self.active_context_size,
-        )
+        rated_models, self.online_mode = self.evaluate_compatibility_with_local()
         self.rated_models = self._normalize_rated_models(rated_models)
         self.update_scan_results(from_cache=True)
 
@@ -201,11 +286,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                 force_refresh=force_refresh,
                 on_background_done=self._on_background_snapshot,
             )
-            rated_models, self.online_mode = evaluate_compatibility(
-                self.specs,
-                quantization=self.active_quantization,
-                context_size=self.active_context_size,
-            )
+            rated_models, self.online_mode = self.evaluate_compatibility_with_local()
             self.rated_models = self._normalize_rated_models(rated_models)
             if not self.is_closing and self.winfo_exists():
                 self.after(0, self.update_scan_results)
@@ -246,11 +327,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         if res.get("success", False):
             # Re-evaluate with the new models if hardware specs have been detected
             if self.specs is not None:
-                rated_models, self.online_mode = evaluate_compatibility(
-                    self.specs,
-                    quantization=self.active_quantization,
-                    context_size=self.active_context_size,
-                )
+                rated_models, self.online_mode = self.evaluate_compatibility_with_local()
                 self.rated_models = self._normalize_rated_models(rated_models)
                 self.render_models_list()
 
@@ -278,11 +355,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         if self.is_closing or not self.winfo_exists():
             return
         self.specs = snapshot
-        rated_models, self.online_mode = evaluate_compatibility(
-            self.specs,
-            quantization=self.active_quantization,
-            context_size=self.active_context_size,
-        )
+        rated_models, self.online_mode = self.evaluate_compatibility_with_local()
         self.rated_models = self._normalize_rated_models(rated_models)
         self.update_scan_results()
 
@@ -344,11 +417,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                 
         # Re-evaluate models locally since list of installed models changed
         if self.specs is not None:
-            rated_models, self.online_mode = evaluate_compatibility(
-                self.specs,
-                quantization=self.active_quantization,
-                context_size=self.active_context_size,
-            )
+            rated_models, self.online_mode = self.evaluate_compatibility_with_local()
             self.rated_models = self._normalize_rated_models(rated_models)
         
         # Redraw model rows to update buttons and badges!
