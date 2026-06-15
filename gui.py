@@ -266,38 +266,6 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         self.title(UI_BASE["window_title"])
         self.geometry(f"{self.ui_tokens['initial_width']}x{self.ui_tokens['initial_height']}")
         self.minsize(self.ui_tokens["min_width"], self.ui_tokens["min_height"])
-        
-        if self.platform_name == "Windows":
-            import ctypes
-            try:
-                # Tell Windows to treat this as a unique app process to fix grouping and blurry taskbar icons
-                myappid = "cruzvargas.aicompatibilitychecker.v1"
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-            except Exception:
-                pass
-
-        try:
-            # Set the window icon bitmap (needed for title bar icon on Windows)
-            icon_path = os.path.join(config.BUNDLE_DIR, "assets", "logo.ico")
-            if not os.path.exists(icon_path):
-                icon_path = os.path.join(config.CURRENT_DIR, "assets", "logo.ico")
-            if os.path.exists(icon_path):
-                self.iconbitmap(icon_path)
-        except Exception:
-            pass
-
-        try:
-            # Set high-resolution icon photo using the PNG to avoid pixelation/blurriness in the taskbar
-            png_path = os.path.join(config.BUNDLE_DIR, "assets", "tecnologia.png")
-            if not os.path.exists(png_path):
-                png_path = os.path.join(config.CURRENT_DIR, "assets", "tecnologia.png")
-            if os.path.exists(png_path):
-                from PIL import Image, ImageTk
-                img = Image.open(png_path)
-                self._window_icon_photo = ImageTk.PhotoImage(img)
-                self.iconphoto(True, self._window_icon_photo)
-        except Exception:
-            pass
 
     def start_scan_thread(self, force_refresh=False):
         if self.is_closing:
