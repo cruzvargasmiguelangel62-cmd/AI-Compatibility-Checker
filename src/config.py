@@ -23,7 +23,14 @@ def get_base_dir():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def get_bundle_dir():
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 CURRENT_DIR = get_base_dir()
+BUNDLE_DIR = get_bundle_dir()
 ENV_PATH = os.path.join(CURRENT_DIR, ".env")
 _env = load_env(ENV_PATH)
 

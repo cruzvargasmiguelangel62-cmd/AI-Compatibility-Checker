@@ -9,7 +9,9 @@ from src import config
 UI_BASE = config.UI_BASE
 
 # Load TRANSLATIONS dynamically from external JSON file
-translations_path = os.path.join(config.CURRENT_DIR, "data", "translations.json")
+translations_path = os.path.join(config.BUNDLE_DIR, "data", "translations.json")
+if not os.path.exists(translations_path):
+    translations_path = os.path.join(config.CURRENT_DIR, "data", "translations.json")
 try:
     with open(translations_path, "r", encoding="utf-8") as f:
         TRANSLATIONS = json.load(f)

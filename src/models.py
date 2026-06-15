@@ -108,8 +108,12 @@ def _get_base_dir() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _data_path(filename: str) -> str:
-    return os.path.join(_get_base_dir(), "data", filename)
+def _data_path(filename: str, user_dir: bool = True) -> str:
+    base = _get_base_dir()
+    if not user_dir:
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            base = sys._MEIPASS
+    return os.path.join(base, "data", filename)
 
 
 # ---------------------------------------------------------------------------
@@ -168,8 +172,8 @@ def load_models_data() -> tuple[list[dict], bool]:
        Cache it locally on success.
     4. Return an empty list if all sources fail.
     """
-    primary_path = _data_path("models.json")
-    fallback_path = _data_path("models_online.json")
+    primary_path = _data_path("models.json", user_dir=True)
+    fallback_path = _data_path("models_online.json", user_dir=False)
 
     for path in (primary_path, fallback_path):
         local = _load_json_file(path)
