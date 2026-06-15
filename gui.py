@@ -210,6 +210,12 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             if not self.is_closing and self.winfo_exists():
                 self.after(0, lambda: self.show_scan_error(err))
 
+    def on_ollama_status_click(self):
+        if self.is_closing:
+            return
+        if not self.ollama_api_online:
+            self.show_ollama_install_modal()
+
     def trigger_catalog_update(self):
         if self.is_closing:
             return

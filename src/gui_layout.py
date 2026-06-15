@@ -358,6 +358,26 @@ class AppLayoutMixin:
         )
         self.ollama_status_label.pack(side="left", padx=5)
 
+        # Interaction bindings for Ollama status card
+        def on_ollama_enter(_):
+            if not self.ollama_api_online:
+                self.ollama_status_card.configure(border_color=UI_COLORS["hover"])
+
+        def on_ollama_leave(_):
+            self.ollama_status_card.configure(border_color=self.border_color)
+
+        def on_ollama_click(_):
+            self.on_ollama_status_click()
+
+        self.ollama_status_card.configure(cursor="hand2")
+        self.ollama_status_dot.configure(cursor="hand2")
+        self.ollama_status_label.configure(cursor="hand2")
+
+        for widget in (self.ollama_status_card, self.ollama_status_dot, self.ollama_status_label):
+            widget.bind("<Enter>", on_ollama_enter, add="+")
+            widget.bind("<Leave>", on_ollama_leave, add="+")
+            widget.bind("<Button-1>", on_ollama_click, add="+")
+
         self.update_catalog_btn = ctk.CTkButton(
             self.sidebar_buttons,
             text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"),
