@@ -395,15 +395,15 @@ UI_TEXT = {
 }
 
 UI_SPEC_CARDS = {
-    "os":        {"title": _get_str("UI_CARD_OS_TITLE",        "SISTEMA OPERATIVO"),   "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_OS_ICON",        "💻")},
+    "os":        {"title": _get_str("UI_CARD_OS_TITLE",        "SISTEMA (OS)"),        "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_OS_ICON",        "💻")},
     "cpu":       {"title": _get_str("UI_CARD_CPU_TITLE",       "PROCESADOR (CPU)"),    "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CPU_ICON",       "🧠")},
     "ram":       {"title": _get_str("UI_CARD_RAM_TITLE",       "MEMORIA RAM"),         "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_RAM_ICON",       "💾")},
     "gpu":       {"title": _get_str("UI_CARD_GPU_TITLE",       "GRÁFICOS (GPU)"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_GPU_ICON",       "⚡")},
-    "disk":      {"title": _get_str("UI_CARD_DISK_TITLE",      "ALMACENAMIENTO"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_DISK_ICON",      "📁")},
-    "python":    {"title": _get_str("UI_CARD_PYTHON_TITLE",    "ENTORNO PYTHON"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_PYTHON_ICON",    "🐍")},
-    "cuda":      {"title": _get_str("UI_CARD_CUDA_TITLE",      "NVIDIA CUDA / DRIVER"),"value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CUDA_ICON",      "💚")},
-    "rocm":      {"title": _get_str("UI_CARD_ROCM_TITLE",      "AMD ROCm / HIP"),      "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_ROCM_ICON",       "❤️")},
-    "compilers": {"title": _get_str("UI_CARD_COMPILERS_TITLE", "COMPILADORES C++"),    "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_COMPILERS_ICON", "🔧")},
+    "disk":      {"title": _get_str("UI_CARD_DISK_TITLE",      "DISCO"),               "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_DISK_ICON",      "📁")},
+    "python":    {"title": _get_str("UI_CARD_PYTHON_TITLE",    "PYTHON"),              "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_PYTHON_ICON",    "🐍")},
+    "cuda":      {"title": _get_str("UI_CARD_CUDA_TITLE",      "NVIDIA CUDA"),         "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_CUDA_ICON",      "💚")},
+    "rocm":      {"title": _get_str("UI_CARD_ROCM_TITLE",      "AMD ROCm"),            "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_ROCM_ICON",       "❤️")},
+    "compilers": {"title": _get_str("UI_CARD_COMPILERS_TITLE", "COMPILADORES"),        "value": _get_str("UI_CARD_DEFAULT_VALUE", "Detectando..."), "icon": _get_str("UI_CARD_COMPILERS_ICON", "🔧")},
 }
 
 UI_ACTIONS = {

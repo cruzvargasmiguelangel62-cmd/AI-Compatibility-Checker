@@ -28,8 +28,11 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         self.responsive_mode = None
         self.resize_job = None
         self.render_job = None
+        self.search_debounce_job = None
         self.pending_models = []
         self.model_row_widgets = []
+        self.widgets_to_destroy = []
+        self.destroy_job = None
         self.is_closing = False
         self.loading_modal = None
         self.guide_visible = True
@@ -219,6 +222,11 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
     def trigger_catalog_update(self):
         if self.is_closing:
             return
+        
+        t_text = UI_TEXT.get("catalog_updating_title", "Actualizando Catálogo Online")
+        b_text = UI_TEXT.get("catalog_updating_body", "Conectando con el servidor y descargando la base de datos de modelos...\nEspera un momento...")
+        self.show_loading_modal(title_text=t_text, body_text=b_text)
+        
         self.update_catalog_btn.configure(state="disabled", text=UI_TEXT.get("catalog_updating", "Actualizando..."))
 
         def worker():
@@ -232,6 +240,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
     def _on_catalog_update_done(self, res):
         if self.is_closing or not self.winfo_exists():
             return
+        self.hide_loading_modal()
         self.update_catalog_btn.configure(state="normal", text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"))
 
         if res.get("success", False):
@@ -288,6 +297,12 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         if self.render_job is not None:
             self.after_cancel(self.render_job)
             self.render_job = None
+        if self.search_debounce_job is not None:
+            self.after_cancel(self.search_debounce_job)
+            self.search_debounce_job = None
+        if hasattr(self, "destroy_job") and self.destroy_job is not None:
+            self.after_cancel(self.destroy_job)
+            self.destroy_job = None
         self.pending_models = []
         try:
             self.quit()

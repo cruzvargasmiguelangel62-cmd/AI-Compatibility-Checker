@@ -85,6 +85,19 @@ class AppTextMixin:
         if not text or max_width <= 0:
             return text
 
+        if not hasattr(self, "_wrap_cache"):
+            self._wrap_cache = {}
+
+        # Safely extract font properties to use as cache key
+        font_key = (
+            font.cget("family") + str(font.cget("size")) + font.cget("weight") + font.cget("slant")
+            if hasattr(font, "cget")
+            else str(font)
+        )
+        cache_key = (text, font_key, max_width)
+        if cache_key in self._wrap_cache:
+            return self._wrap_cache[cache_key]
+
         measure_font = tkfont.Font(font=font)
         wrapped_lines = []
         for paragraph in str(text).splitlines() or [""]:
@@ -103,7 +116,9 @@ class AppTextMixin:
                     current_line = word
             wrapped_lines.append(current_line)
 
-        return "\n".join(wrapped_lines)
+        res = "\n".join(wrapped_lines)
+        self._wrap_cache[cache_key] = res
+        return res
 
     def _measure_text_width(self, font, text, horizontal_padding=0, minimum=0, maximum=None):
         measured_width = tkfont.Font(font=font).measure(str(text)) + horizontal_padding
@@ -115,14 +130,36 @@ class AppTextMixin:
     def _bind_wrapped_text(self, container, label, font, horizontal_padding=0, minimum=10, maximum=None):
         label._original_text = label.cget("text")
 
+        # Intercept configure and config to dynamically update _original_text when changed
+        orig_configure = label.configure
+        def custom_configure(**kwargs):
+            if "text" in kwargs:
+                label._original_text = kwargs["text"]
+            return orig_configure(**kwargs)
+        label.configure = custom_configure
+
+        if hasattr(label, "config"):
+            orig_config = label.config
+            def custom_config(**kwargs):
+                if "text" in kwargs:
+                    label._original_text = kwargs["text"]
+                return orig_config(**kwargs)
+            label.config = custom_config
+
         def _sync_text_wrap(event):
             if event.widget is not container:
                 return
             available_width = max(minimum, event.width - horizontal_padding)
             if maximum is not None:
                 available_width = min(maximum, available_width)
+            
+            # Avoid redundant layout/wrapping if the width hasn't changed
+            if getattr(label, "_last_wrap_width", None) == available_width:
+                return
+            label._last_wrap_width = available_width
+
             wrapped_text = self._wrap_text_to_pixels(label._original_text, font, available_width)
-            label.configure(text=wrapped_text, wraplength=available_width, anchor="w", justify="left")
+            orig_configure(text=wrapped_text, wraplength=available_width)
 
         container.bind("<Configure>", _sync_text_wrap, add="+")
 
@@ -169,6 +206,12 @@ class AppTextMixin:
             available_width = max(minimum, event.width - horizontal_padding)
             if maximum is not None:
                 available_width = min(maximum, available_width)
+            
+            # Avoid redundant configuration if the width hasn't changed
+            if getattr(message_widget, "_last_message_width", None) == available_width:
+                return
+            message_widget._last_message_width = available_width
+
             message_widget.configure(width=available_width)
 
         container.bind("<Configure>", _sync_message_width, add="+")
@@ -183,6 +226,12 @@ class AppTextMixin:
             available_width = max(minimum, event.width - horizontal_padding)
             if maximum is not None:
                 available_width = min(maximum, available_width)
+            
+            # Avoid redundant configuration if the width hasn't changed
+            if getattr(container, "_last_sync_width", None) == available_width:
+                return
+            container._last_sync_width = available_width
+
             for label in labels:
                 label.configure(wraplength=available_width, anchor="w", justify="left")
 

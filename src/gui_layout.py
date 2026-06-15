@@ -30,9 +30,12 @@ class AppLayoutMixin:
         new_mode = "stacked" if current_width < UI_LAYOUT["content_stack_breakpoint"] else "split"
         if new_mode != self.responsive_mode:
             self.responsive_mode = new_mode
-            self.grid_columnconfigure(0, weight=0, minsize=self.ui_tokens["sidebar_width"])
-            self.grid_columnconfigure(1, weight=1)
             if new_mode == "stacked":
+                self.grid_columnconfigure(0, weight=1, minsize=0)
+                self.grid_columnconfigure(1, weight=0, minsize=0)
+                self.grid_rowconfigure(0, weight=0)
+                self.grid_rowconfigure(1, weight=1)
+
                 self.sidebar.grid(row=0, column=0, columnspan=2, sticky="ew")
                 self.main_container.grid(
                     row=1,
@@ -47,6 +50,11 @@ class AppLayoutMixin:
                 self.search_entry.grid(row=0, column=0, columnspan=2, sticky="ew", padx=(0, 0), pady=(0, 8))
                 self.category_selector.grid(row=1, column=0, columnspan=2, sticky="ew")
             else:
+                self.grid_columnconfigure(0, weight=0, minsize=self.ui_tokens["sidebar_width"])
+                self.grid_columnconfigure(1, weight=1)
+                self.grid_rowconfigure(0, weight=1)
+                self.grid_rowconfigure(1, weight=0)
+
                 self.sidebar.grid(row=0, column=0, columnspan=1, sticky="nsew")
                 self.main_container.grid(
                     row=0,
@@ -100,7 +108,7 @@ class AppLayoutMixin:
         self.grid_columnconfigure(0, weight=0, minsize=self.ui_tokens["sidebar_width"])
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(1, weight=0)
 
         self.sidebar = ctk.CTkScrollableFrame(
             self,
@@ -157,12 +165,21 @@ class AppLayoutMixin:
         )
         self.side_subtitle.pack(padx=sidebar_edge_padding, pady=(0, self.ui_tokens["section_gap"]), anchor="w")
 
+        # Hardware cards frame in 2-column grid layout
         self.cards_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.cards_frame.pack(fill="both", expand=True, padx=sidebar_inner_padding, pady=0)
+        self.cards_frame.grid_columnconfigure(0, weight=1, uniform="hw_cards")
+        self.cards_frame.grid_columnconfigure(1, weight=1, uniform="hw_cards")
+
         for key in ("os", "cpu", "ram", "gpu", "disk"):
             card = self.create_spec_card(self.cards_frame, **UI_SPEC_CARDS[key])
             setattr(self, f"{key}_card", card)
-            card.pack(fill="x", pady=3)
+
+        self.os_card.grid(row=0, column=0, columnspan=2, sticky="ew", pady=3)
+        self.cpu_card.grid(row=1, column=0, columnspan=2, sticky="ew", pady=3)
+        self.ram_card.grid(row=2, column=0, columnspan=1, sticky="ew", padx=(0, 3), pady=3)
+        self.disk_card.grid(row=2, column=1, columnspan=1, sticky="ew", padx=(3, 0), pady=3)
+        self.gpu_card.grid(row=3, column=0, columnspan=2, sticky="ew", pady=3)
 
         self.soft_title = ctk.CTkLabel(
             self.sidebar,
@@ -180,12 +197,20 @@ class AppLayoutMixin:
         )
         self.soft_subtitle.pack(padx=sidebar_edge_padding, pady=(0, 6), anchor="w")
 
+        # Software cards frame in 2-column grid layout
         self.soft_cards_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.soft_cards_frame.pack(fill="both", expand=True, padx=sidebar_inner_padding, pady=0)
+        self.soft_cards_frame.grid_columnconfigure(0, weight=1, uniform="sw_cards")
+        self.soft_cards_frame.grid_columnconfigure(1, weight=1, uniform="sw_cards")
+
         for key in ("python", "cuda", "rocm", "compilers"):
             card = self.create_spec_card(self.soft_cards_frame, **UI_SPEC_CARDS[key])
             setattr(self, f"{key}_card", card)
-            card.pack(fill="x", pady=3)
+
+        self.python_card.grid(row=0, column=0, columnspan=1, sticky="ew", padx=(0, 3), pady=3)
+        self.compilers_card.grid(row=0, column=1, columnspan=1, sticky="ew", padx=(3, 0), pady=3)
+        self.cuda_card.grid(row=1, column=0, columnspan=1, sticky="ew", padx=(0, 3), pady=3)
+        self.rocm_card.grid(row=1, column=1, columnspan=1, sticky="ew", padx=(3, 0), pady=3)
 
         # Settings section
         self.settings_title = ctk.CTkLabel(
@@ -199,17 +224,26 @@ class AppLayoutMixin:
         self.settings_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         self.settings_frame.pack(fill="both", expand=True, padx=sidebar_inner_padding, pady=0)
 
-        # Quantization Dropdown
+        # Dropdowns horizontal frame
+        self.dropdowns_frame = ctk.CTkFrame(self.settings_frame, fg_color="transparent")
+        self.dropdowns_frame.pack(fill="x", padx=0, pady=0)
+        self.dropdowns_frame.grid_columnconfigure(0, weight=1, uniform="settings")
+        self.dropdowns_frame.grid_columnconfigure(1, weight=1, uniform="settings")
+
+        # Quantization Dropdown (Column 0)
+        self.quant_container = ctk.CTkFrame(self.dropdowns_frame, fg_color="transparent")
+        self.quant_container.grid(row=0, column=0, sticky="ew", padx=(0, 3))
+
         self.quant_label = ctk.CTkLabel(
-            self.settings_frame,
+            self.quant_container,
             text=UI_TEXT["quant_label"],
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_muted,
         )
-        self.quant_label.pack(anchor="w", padx=4, pady=(4, 2))
+        self.quant_label.pack(anchor="w", padx=2, pady=(2, 2))
 
         self.quant_dropdown = ctk.CTkOptionMenu(
-            self.settings_frame,
+            self.quant_container,
             values=["Q4_K_M", "Q2_K", "Q8_0", "FP16"],
             font=self._font("sidebar_text"),
             dropdown_font=self._font("sidebar_text"),
@@ -221,20 +255,23 @@ class AppLayoutMixin:
             dropdown_text_color=self.text_primary,
             command=self.on_quant_change,
         )
-        self.quant_dropdown.pack(fill="x", padx=4, pady=(0, 8))
+        self.quant_dropdown.pack(fill="x", padx=2, pady=(0, 4))
         self.quant_dropdown.set(self.active_quantization)
 
-        # Context Size Dropdown
+        # Context Size Dropdown (Column 1)
+        self.context_container = ctk.CTkFrame(self.dropdowns_frame, fg_color="transparent")
+        self.context_container.grid(row=0, column=1, sticky="ew", padx=(3, 0))
+
         self.context_label = ctk.CTkLabel(
-            self.settings_frame,
+            self.context_container,
             text=UI_TEXT["context_label"],
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_muted,
         )
-        self.context_label.pack(anchor="w", padx=4, pady=(4, 2))
+        self.context_label.pack(anchor="w", padx=2, pady=(2, 2))
 
         self.context_dropdown = ctk.CTkOptionMenu(
-            self.settings_frame,
+            self.context_container,
             values=["8K", "16K", "32K", "64K", "128K"],
             font=self._font("sidebar_text"),
             dropdown_font=self._font("sidebar_text"),
@@ -246,20 +283,29 @@ class AppLayoutMixin:
             dropdown_text_color=self.text_primary,
             command=self.on_context_change,
         )
-        self.context_dropdown.pack(fill="x", padx=4, pady=(0, 8))
+        self.context_dropdown.pack(fill="x", padx=2, pady=(0, 4))
         self.context_dropdown.set(f"{self.active_context_size}K")
 
-        # Language Dropdown
+        # Bottom horizontal row for Language and Copy specs
+        self.lang_specs_frame = ctk.CTkFrame(self.settings_frame, fg_color="transparent")
+        self.lang_specs_frame.pack(fill="x", padx=0, pady=(4, 0))
+        self.lang_specs_frame.grid_columnconfigure(0, weight=1, uniform="settings_bottom")
+        self.lang_specs_frame.grid_columnconfigure(1, weight=1, uniform="settings_bottom")
+
+        # Language Dropdown (Column 0)
+        self.lang_container = ctk.CTkFrame(self.lang_specs_frame, fg_color="transparent")
+        self.lang_container.grid(row=0, column=0, sticky="ew", padx=(0, 3))
+
         self.lang_label = ctk.CTkLabel(
-            self.settings_frame,
+            self.lang_container,
             text="Idioma / Language",
             font=self._font("sidebar_text_small", weight="bold"),
             text_color=self.text_muted,
         )
-        self.lang_label.pack(anchor="w", padx=4, pady=(4, 2))
+        self.lang_label.pack(anchor="w", padx=2, pady=(0, 2))
 
         self.lang_dropdown = ctk.CTkOptionMenu(
-            self.settings_frame,
+            self.lang_container,
             values=["Español", "English"],
             font=self._font("sidebar_text"),
             dropdown_font=self._font("sidebar_text"),
@@ -271,12 +317,22 @@ class AppLayoutMixin:
             dropdown_text_color=self.text_primary,
             command=self.on_lang_change,
         )
-        self.lang_dropdown.pack(fill="x", padx=4, pady=(0, 8))
+        self.lang_dropdown.pack(fill="x", padx=2, pady=(0, 4))
         self.lang_dropdown.set("Español" if self.active_language == "es" else "English")
 
-        # Copy specs button
+        # Copy specs button (Column 1) - with a spacer to align vertically
+        self.copy_btn_container = ctk.CTkFrame(self.lang_specs_frame, fg_color="transparent")
+        self.copy_btn_container.grid(row=0, column=1, sticky="ew", padx=(3, 0))
+
+        self.btn_spacer = ctk.CTkLabel(
+            self.copy_btn_container,
+            text="",
+            font=self._font("sidebar_text_small", weight="bold"),
+        )
+        self.btn_spacer.pack(anchor="w", padx=2, pady=(0, 2))
+
         self.copy_specs_btn = ctk.CTkButton(
-            self.settings_frame,
+            self.copy_btn_container,
             text=UI_TEXT["copy_specs_btn"],
             font=self._font("sidebar_text_small", weight="bold"),
             fg_color=UI_COLORS["button_dark"],
@@ -285,7 +341,7 @@ class AppLayoutMixin:
             height=28,
             command=self.copy_specs_report,
         )
-        self.copy_specs_btn.pack(fill="x", padx=4, pady=(8, 4))
+        self.copy_specs_btn.pack(fill="x", padx=2, pady=(0, 4))
 
         self.scan_status_label = ctk.CTkLabel(
             self.sidebar,
@@ -378,19 +434,6 @@ class AppLayoutMixin:
             widget.bind("<Leave>", on_ollama_leave, add="+")
             widget.bind("<Button-1>", on_ollama_click, add="+")
 
-        self.update_catalog_btn = ctk.CTkButton(
-            self.sidebar_buttons,
-            text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"),
-            font=self._font("sidebar_text_small", weight="bold"),
-            height=28,
-            corner_radius=8,
-            fg_color=UI_COLORS["button_dark"],
-            hover_color=UI_COLORS["button_dark_hover"],
-            text_color=self.text_primary,
-            command=self.trigger_catalog_update,
-        )
-        self.update_catalog_btn.pack(fill="x", pady=(0, 10))
-
         self.rescan_btn = ctk.CTkButton(
             self.sidebar_buttons,
             text=UI_TEXT["analyze"],
@@ -414,6 +457,9 @@ class AppLayoutMixin:
             text=f"{icon}  {title}",
             font=self._font("spec_label", weight="bold"),
             text_color=self.text_muted,
+            wraplength=120,
+            justify="left",
+            anchor="w",
         )
         cat_label.grid(row=0, column=0, sticky="w", padx=card_padding, pady=(8, 2))
 
@@ -422,7 +468,7 @@ class AppLayoutMixin:
             text=value,
             font=self._font("spec_value", weight="bold"),
             text_color=self.text_primary,
-            wraplength=self._dynamic_wraplength(0.18, 210, 300),
+            wraplength=120,
             justify="left",
             anchor="w",
         )
@@ -445,13 +491,14 @@ class AppLayoutMixin:
         card.bind("<Leave>", lambda e: card.configure(border_color=self.border_color))
         val_label.bind("<Enter>", lambda e: card.configure(border_color=self.hover_color))
         val_label.bind("<Leave>", lambda e: card.configure(border_color=self.border_color))
-        self._bind_label_to_container_width(card, [val_label, sub_label], horizontal_padding=(card_padding * 2) + 24, minimum=120)
+        self._bind_label_to_container_width(card, [cat_label, val_label, sub_label], horizontal_padding=(card_padding * 2) + 24, minimum=50)
         return card
 
     def build_main_header(self):
         self.header_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.header_frame.grid(row=0, column=0, sticky="ew", pady=(0, self.ui_tokens["section_gap"]))
         self.header_frame.grid_columnconfigure(0, weight=1)
+        self.header_frame.grid_columnconfigure(1, weight=0)
 
         self.main_title = ctk.CTkLabel(
             self.header_frame,
@@ -461,6 +508,19 @@ class AppLayoutMixin:
         )
         self.main_title.grid(row=0, column=0, sticky="w")
 
+        self.update_catalog_btn = ctk.CTkButton(
+            self.header_frame,
+            text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"),
+            font=self._font("sidebar_text_small", weight="bold"),
+            height=28,
+            corner_radius=8,
+            fg_color=UI_COLORS["button_dark"],
+            hover_color=UI_COLORS["button_dark_hover"],
+            text_color=self.text_primary,
+            command=self.trigger_catalog_update,
+        )
+        self.update_catalog_btn.grid(row=0, column=1, sticky="e", padx=(10, 0))
+
         self.main_desc = ctk.CTkLabel(
             self.header_frame,
             text=UI_TEXT["main_description"],
@@ -469,7 +529,7 @@ class AppLayoutMixin:
             justify="left",
             anchor="w",
         )
-        self.main_desc.grid(row=1, column=0, sticky="w", pady=(2, 0))
+        self.main_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
         self._bind_label_to_container_width(self.header_frame, self.main_desc, horizontal_padding=32, minimum=160)
 
         self.control_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
@@ -648,10 +708,11 @@ class AppLayoutMixin:
                 text=r_model["name"],
                 font=self._font("recommend_name", weight="bold"),
                 text_color=self.text_primary,
-                wraplength=self._dynamic_wraplength(0.1, 110, 160),
+                wraplength=100,
                 justify="left",
             )
             r_name.pack(anchor="w", padx=10, pady=(0, 2))
+            self._bind_label_to_container_width(card, r_name, horizontal_padding=20, minimum=60)
 
             r_badge = ctk.CTkLabel(
                 card,
@@ -661,7 +722,6 @@ class AppLayoutMixin:
                 fg_color=r_model["color"],
                 corner_radius=4,
                 height=18,
-                width=110,
             )
             r_badge.pack(anchor="w", padx=10, pady=(2, 6))
 
@@ -747,11 +807,74 @@ class AppLayoutMixin:
 
     def on_category_select(self, category):
         self.active_category = category
-        self.render_models_list()
+        if hasattr(self, "search_debounce_job") and self.search_debounce_job is not None:
+            self.after_cancel(self.search_debounce_job)
+            self.search_debounce_job = None
+        self.apply_filter()
 
     def on_search_change(self, *args):
         self.search_query = self.search_entry.get().strip().lower()
-        self.render_models_list()
+        if hasattr(self, "search_debounce_job") and self.search_debounce_job is not None:
+            self.after_cancel(self.search_debounce_job)
+        self.search_debounce_job = self.after(100, self.apply_filter)
+
+    def _model_matches_filter(self, model):
+        if self.active_category == config.MODEL_TEXT["llm_category"] and model["category"] != config.MODEL_TEXT["llm_category"]:
+            return False
+        if self.active_category == config.MODEL_TEXT["image_category"] and model["category"] != config.MODEL_TEXT["image_category"]:
+            return False
+        if self.search_query:
+            name_match = self.search_query in model["name"].lower()
+            desc_match = self.search_query in model["description"].lower()
+            prov_match = self.search_query in model["provider"].lower()
+            if not (name_match or desc_match or prov_match):
+                return False
+        return True
+
+    def apply_filter(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        
+        # Unpack all first to maintain the correct sorted order when we repack them
+        for row in self.model_row_widgets:
+            if row.winfo_manager():
+                row.pack_forget()
+        
+        # Pack the ones that match the filter
+        for row in self.model_row_widgets:
+            if not hasattr(row, "model"):
+                continue
+            if self._model_matches_filter(row.model):
+                row.pack(fill="x", pady=4, ipady=2)
+        
+        self._update_empty_state()
+
+    def _update_empty_state(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        
+        # Check if any rendered widget is currently visible
+        has_visible = False
+        for row in self.model_row_widgets:
+            if row.winfo_manager():
+                has_visible = True
+                break
+        
+        # Check if there are still pending models that might match the filter
+        has_pending_matching = any(self._model_matches_filter(m) for m in self.pending_models)
+        
+        if not has_visible and not has_pending_matching:
+            if not hasattr(self, "no_results_label") or self.no_results_label is None:
+                self.no_results_label = ctk.CTkLabel(
+                    self.scroll_frame,
+                    text=UI_TEXT["empty_models"],
+                    font=self._font("empty_state", slant="italic"),
+                    text_color=self.text_muted,
+                )
+            self.no_results_label.pack(pady=40)
+        else:
+            if hasattr(self, "no_results_label") and self.no_results_label is not None:
+                self.no_results_label.pack_forget()
 
     def render_models_list(self):
         if self.is_closing or not self.winfo_exists():
@@ -759,46 +882,64 @@ class AppLayoutMixin:
         if self.render_job is not None:
             self.after_cancel(self.render_job)
             self.render_job = None
+            
+        if not hasattr(self, "widgets_to_destroy"):
+            self.widgets_to_destroy = []
+            
+        # Hide active row frames immediately and queue them for async destruction
+        for row in self.model_row_widgets:
+            try:
+                if row.winfo_exists():
+                    row.pack_forget()
+                    self.widgets_to_destroy.append(row)
+            except tk.TclError:
+                pass
+                
+        self.model_row_widgets = []
         self.pending_models = []
-        self.model_row_widgets = []
+        
+        if hasattr(self, "no_results_label") and self.no_results_label is not None:
+            try:
+                self.no_results_label.pack_forget()
+            except Exception:
+                pass
+            self.no_results_label = None
 
-        for child in self.scroll_frame.winfo_children():
-            child.destroy()
-
-        filtered_models = []
-        for model in self.rated_models:
-            if self.active_category == config.MODEL_TEXT["llm_category"] and model["category"] != config.MODEL_TEXT["llm_category"]:
-                continue
-            if self.active_category == config.MODEL_TEXT["image_category"] and model["category"] != config.MODEL_TEXT["image_category"]:
-                continue
-            if self.search_query:
-                name_match = self.search_query in model["name"].lower()
-                desc_match = self.search_query in model["description"].lower()
-                prov_match = self.search_query in model["provider"].lower()
-                if not (name_match or desc_match or prov_match):
-                    continue
-            filtered_models.append(model)
-
-        if not filtered_models:
-            no_results = ctk.CTkLabel(
-                self.scroll_frame,
-                text=UI_TEXT["empty_models"],
-                font=self._font("empty_state", slant="italic"),
-                text_color=self.text_muted,
-            )
-            no_results.pack(pady=40)
-            return
-
-        self.pending_models = list(filtered_models)
-        self.model_row_widgets = []
+        self.pending_models = list(self.rated_models)
+        self._schedule_widgets_destruction()
         self._schedule_model_render()
+
+    def _schedule_widgets_destruction(self):
+        if not hasattr(self, "destroy_job") or self.destroy_job is None:
+            self.destroy_job = self.after(20, self._destroy_widgets_batch)
+
+    def _destroy_widgets_batch(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        self.destroy_job = None
+        if not hasattr(self, "widgets_to_destroy") or not self.widgets_to_destroy:
+            return
+            
+        # Destroy top-level row frames in batches of 2 (recursive destruction handles their children)
+        batch = self.widgets_to_destroy[:2]
+        self.widgets_to_destroy = self.widgets_to_destroy[2:]
+        
+        for widget in batch:
+            try:
+                if widget.winfo_exists():
+                    widget.destroy()
+            except tk.TclError:
+                pass
+                
+        if self.widgets_to_destroy:
+            self.destroy_job = self.after(20, self._destroy_widgets_batch)
 
     def _schedule_model_render(self):
         if self.is_closing or not self.winfo_exists():
             return
         if self.render_job is not None:
             self.after_cancel(self.render_job)
-        self.render_job = self.after(1, self._render_model_batch)
+        self.render_job = self.after(20, self._render_model_batch)
 
     def _render_model_batch(self):
         if self.is_closing or not self.winfo_exists():
@@ -813,12 +954,17 @@ class AppLayoutMixin:
                 return
             try:
                 row = self.create_model_row(self.scroll_frame, model)
+                row.model = model
                 self.model_row_widgets.append(row)
+                if not self._model_matches_filter(model):
+                    row.pack_forget()
             except tk.TclError:
                 return
 
+        self._update_empty_state()
+
         if self.pending_models:
-            self.render_job = self.after(1, self._render_model_batch)
+            self.render_job = self.after(20, self._render_model_batch)
 
     def create_model_row(self, parent, model):
         is_rec = model.get("recommended", False)
@@ -874,7 +1020,9 @@ class AppLayoutMixin:
         badge.bind("<Enter>", on_enter)
         badge.bind("<Leave>", on_leave)
 
-        meta_str = f"{model['category']} • {model['params']} • {model['context']}"
+        provider = model.get("provider", "")
+        provider_part = f" • {provider}" if provider else ""
+        meta_str = f"{model['category']} • {model['params']} • {model['context']}{provider_part}"
         m_meta = ctk.CTkLabel(
             info_frame,
             text=meta_str,
@@ -887,7 +1035,8 @@ class AppLayoutMixin:
 
         m_desc = self._create_wrapped_message(info_frame, model["description"], self._font("model_desc"), self.text_muted, self.card_color)
         m_desc.grid(row=name_row + 2, column=0, columnspan=2, sticky="ew")
-        self._bind_label_to_container_width(info_frame, [m_name, m_meta], horizontal_padding=32, minimum=120)
+        self._bind_label_to_container_width(info_frame, m_name, horizontal_padding=160, minimum=120)
+        self._bind_label_to_container_width(info_frame, m_meta, horizontal_padding=32, minimum=120)
         self._bind_message_width(info_frame, m_desc, self._font("model_desc"), horizontal_padding=40, minimum=180)
 
         exp_frame = ctk.CTkFrame(row, fg_color="transparent")
@@ -910,7 +1059,6 @@ class AppLayoutMixin:
 
         m_details = self._create_wrapped_message(detail_frame, model["details"], self._font("model_details"), self.text_primary, self.card_color)
         m_details.pack(fill="x", anchor="w")
-        self._bind_message_width(detail_frame, m_details, self._font("model_details"), horizontal_padding=0, minimum=UI_LAYOUT["detail_min_width"])
 
         m_req = ctk.CTkLabel(
             support_frame,
@@ -937,12 +1085,17 @@ class AppLayoutMixin:
             m_tip.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
             m_tip.bind("<Enter>", on_enter)
             m_tip.bind("<Leave>", on_leave)
-            self._bind_wrapped_text(exp_frame, m_tip, self._font("model_tip", slant="italic"), horizontal_padding=36, minimum=120)
 
         def _sync_exp_wraplength(event):
+            if getattr(self, "is_closing", False):
+                return
             if event.widget is not exp_frame:
                 return
             total_width = max(10, event.width)
+            if getattr(exp_frame, "_last_width", None) == total_width:
+                return
+            exp_frame._last_width = total_width
+            
             stacked_support = total_width < UI_LAYOUT["model_support_stack_breakpoint"]
             if stacked_support:
                 exp_frame.grid_columnconfigure(1, weight=0, minsize=0)
@@ -959,10 +1112,17 @@ class AppLayoutMixin:
                     min(UI_LAYOUT["support_max_width"], int(total_width * UI_LAYOUT["support_width_ratio"])),
                 )
                 detail_width = max(UI_LAYOUT["detail_min_width"], total_width - support_width - 44)
-            m_details.configure(wraplength=detail_width)
+            
+            # Wrap details text precisely using the layout calculated detail_width
+            details_wrapped = self._wrap_text_to_pixels(model["details"], self._font("model_details"), detail_width)
+            m_details.configure(text=details_wrapped, wraplength=detail_width)
+            
             m_req.configure(wraplength=support_width, justify="left" if stacked_support else "right", anchor="w" if stacked_support else "e")
+            
             if has_tip:
-                m_tip.configure(wraplength=max(10, total_width - 36), anchor="w", justify="left")
+                m_tip_width = max(10, total_width - 36)
+                tip_wrapped = self._wrap_text_to_pixels(model["os_tip"], self._font("model_tip", slant="italic"), m_tip_width)
+                m_tip.configure(text=tip_wrapped, wraplength=m_tip_width)
 
         exp_frame.bind("<Configure>", _sync_exp_wraplength, add="+")
 
@@ -1084,8 +1244,15 @@ class AppLayoutMixin:
             return
 
         def _sync_action_layout(event):
+            if getattr(self, "is_closing", False):
+                return
             if event.widget is not resize_container:
                 return
+            width = event.width
+            if getattr(resize_container, "_last_action_width", None) == width:
+                return
+            resize_container._last_action_width = width
+            
             stack_actions = support_frame.winfo_width() < UI_LAYOUT["action_stack_breakpoint"]
             for index, button in enumerate(buttons):
                 button.pack_forget()

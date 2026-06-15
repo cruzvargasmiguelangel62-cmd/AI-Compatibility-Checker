@@ -37,11 +37,15 @@ class AppActionsMixin:
             )
             body.pack(pady=(0, 12))
 
-    def show_loading_modal(self):
+    def show_loading_modal(self, title_text=None, body_text=None):
         if self.loading_modal is not None and self.loading_modal.winfo_exists():
             return
+            
+        t_text = title_text or UI_TEXT["loading_modal_title"]
+        b_text = body_text or UI_TEXT["loading_modal_body"]
+
         modal = ctk.CTkToplevel(self)
-        modal.title(UI_TEXT["loading_modal_title"])
+        modal.title(t_text)
         modal.geometry("420x180")
         modal.resizable(False, False)
         modal.transient(self)
@@ -57,14 +61,14 @@ class AppActionsMixin:
         frame.pack(fill="both", expand=True, padx=16, pady=16)
         title = ctk.CTkLabel(
             frame,
-            text=UI_TEXT["loading_modal_title"],
+            text=t_text,
             font=self._font("main_desc", weight="bold"),
             text_color=self.text_primary,
         )
         title.pack(anchor="w", padx=16, pady=(18, 8))
         body = ctk.CTkLabel(
             frame,
-            text=UI_TEXT["loading_modal_body"],
+            text=b_text,
             font=self._font("model_desc"),
             text_color=self.text_muted,
             justify="left",
