@@ -358,6 +358,19 @@ class AppLayoutMixin:
         )
         self.ollama_status_label.pack(side="left", padx=5)
 
+        self.update_catalog_btn = ctk.CTkButton(
+            self.sidebar_buttons,
+            text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"),
+            font=self._font("sidebar_text_small", weight="bold"),
+            height=28,
+            corner_radius=8,
+            fg_color=UI_COLORS["button_dark"],
+            hover_color=UI_COLORS["button_dark_hover"],
+            text_color=self.text_primary,
+            command=self.trigger_catalog_update,
+        )
+        self.update_catalog_btn.pack(fill="x", pady=(0, 10))
+
         self.rescan_btn = ctk.CTkButton(
             self.sidebar_buttons,
             text=UI_TEXT["analyze"],

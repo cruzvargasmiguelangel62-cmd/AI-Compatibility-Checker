@@ -45,6 +45,9 @@ class AppTextMixin:
         config.MODEL_TEXT.update(TRANSLATIONS[lang]["MODEL_TEXT"])
         config.UI_BASE["search_categories"] = TRANSLATIONS[lang]["search_categories"]
 
+        if hasattr(self, "update_catalog_btn"):
+            self.update_catalog_btn.configure(text=config.UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"))
+
     def _configure_typography(self):
         default_font = self.ui_tokens["font_family"]
         try:

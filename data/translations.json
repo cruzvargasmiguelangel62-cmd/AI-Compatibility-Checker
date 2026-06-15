@@ -98,7 +98,13 @@
       "btn_download": "📥 Descargar",
       "btn_copy": "📋 Copiar",
       "btn_guide": "💡 Guía SD/Flux",
-      "btn_installed": "✓ Instalado"
+      "btn_installed": "✓ Instalado",
+      "btn_update_catalog": "🔄 Actualizar Catálogo Online",
+      "catalog_updating": "Actualizando...",
+      "catalog_update_success_title": "Catálogo Actualizado",
+      "catalog_update_success_body": "Se completó la actualización automática.\n\nModelos añadidos: {added}\nTotal en catálogo: {total}",
+      "catalog_update_failed_title": "Error de Actualización",
+      "catalog_update_failed_body": "No se pudo actualizar el catálogo:\n{error}"
     },
     "UI_SPEC_CARDS": {
       "os": {
@@ -268,7 +274,13 @@
       "btn_download": "📥 Download",
       "btn_copy": "📋 Copy",
       "btn_guide": "💡 SD/Flux Guide",
-      "btn_installed": "✓ Installed"
+      "btn_installed": "✓ Installed",
+      "btn_update_catalog": "🔄 Update Catalog Online",
+      "catalog_updating": "Updating...",
+      "catalog_update_success_title": "Catalog Updated",
+      "catalog_update_success_body": "Automatic update completed.\n\nModels added: {added}\nTotal in catalog: {total}",
+      "catalog_update_failed_title": "Update Error",
+      "catalog_update_failed_body": "Could not update the catalog:\n{error}"
     },
     "UI_SPEC_CARDS": {
       "os": {

@@ -210,6 +210,50 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             if not self.is_closing and self.winfo_exists():
                 self.after(0, lambda: self.show_scan_error(err))
 
+    def trigger_catalog_update(self):
+        if self.is_closing:
+            return
+        self.update_catalog_btn.configure(state="disabled", text=UI_TEXT.get("catalog_updating", "Actualizando..."))
+
+        def worker():
+            from src.updater import update_models_catalog
+            res = update_models_catalog()
+            if not self.is_closing and self.winfo_exists():
+                self.after(0, lambda: self._on_catalog_update_done(res))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_catalog_update_done(self, res):
+        if self.is_closing or not self.winfo_exists():
+            return
+        self.update_catalog_btn.configure(state="normal", text=UI_TEXT.get("btn_update_catalog", "🔄 Actualizar Catálogo Online"))
+
+        if res.get("success", False):
+            # Re-evaluate with the new models if hardware specs have been detected
+            if self.specs is not None:
+                rated_models, self.online_mode = evaluate_compatibility(
+                    self.specs,
+                    quantization=self.active_quantization,
+                    context_size=self.active_context_size,
+                )
+                self.rated_models = self._normalize_rated_models(rated_models)
+                self.render_models_list()
+
+            title = UI_TEXT.get("catalog_update_success_title", "Catálogo Actualizado")
+            body = UI_TEXT.get("catalog_update_success_body", "Actualización completada.").format(
+                added=res.get("added", 0),
+                total=res.get("total", 0)
+            )
+            from tkinter import messagebox
+            messagebox.showinfo(title, body)
+        else:
+            title = UI_TEXT.get("catalog_update_failed_title", "Error de Actualización")
+            body = UI_TEXT.get("catalog_update_failed_body", "Error al actualizar:\n{error}").format(
+                error=res.get("error", "Error desconocido")
+            )
+            from tkinter import messagebox
+            messagebox.showerror(title, body)
+
     def _on_background_snapshot(self, snapshot):
         if self.is_closing or not self.winfo_exists():
             return
