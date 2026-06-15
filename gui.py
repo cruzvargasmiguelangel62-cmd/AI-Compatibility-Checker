@@ -385,6 +385,8 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             self.destroy()
         except tk.TclError:
             pass
+        # Force terminate the process immediately to avoid hanging on background ThreadPoolExecutor or WMI threads
+        os._exit(0)
 
     def refresh_installed_ollama_models(self):
         import threading
