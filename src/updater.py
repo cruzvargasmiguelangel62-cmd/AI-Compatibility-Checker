@@ -9,10 +9,44 @@ parses parameters, estimates memory, and updates the models database.
 import json
 import os
 import re
+import time
 import urllib.request
 from src import config
 
-__all__ = ["update_models_catalog"]
+__all__ = ["update_models_catalog", "auto_update_catalog_if_stale"]
+
+
+def _catalog_meta_path() -> str:
+    return os.path.join(config.CURRENT_DIR, "data", "catalog_meta.json")
+
+
+def _read_catalog_meta() -> dict:
+    try:
+        with open(_catalog_meta_path(), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _write_catalog_meta(meta: dict) -> None:
+    try:
+        os.makedirs(os.path.dirname(_catalog_meta_path()), exist_ok=True)
+        with open(_catalog_meta_path(), "w", encoding="utf-8") as f:
+            json.dump(meta, f)
+    except Exception:
+        pass
+
+
+def auto_update_catalog_if_stale() -> dict:
+    meta = _read_catalog_meta()
+    last_update = meta.get("last_update", 0)
+    hours_since = (time.time() - last_update) / 3600.0
+    if hours_since < config.CATALOG_AUTO_UPDATE_HOURS:
+        return {"success": True, "added": 0, "total": 0, "skipped": True}
+    result = update_models_catalog()
+    if result.get("success"):
+        _write_catalog_meta({"last_update": time.time()})
+    return result
 
 
 def update_models_catalog() -> dict:
@@ -163,4 +197,5 @@ def update_models_catalog() -> dict:
         from .models import clear_models_cache
         clear_models_cache()
 
+    _write_catalog_meta({"last_update": time.time()})
     return {"success": True, "added": added_count, "total": len(existing_models)}

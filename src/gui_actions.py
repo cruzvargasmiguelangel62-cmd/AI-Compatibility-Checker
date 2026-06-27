@@ -254,7 +254,7 @@ class AppActionsMixin:
         import urllib.request
         try:
             req = urllib.request.Request(f"{config.OLLAMA_HOST}/")
-            with urllib.request.urlopen(req, timeout=1.0) as resp:
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
                 return resp.status == 200
         except Exception:
             return False
@@ -264,7 +264,7 @@ class AppActionsMixin:
         import json
         try:
             req = urllib.request.Request(f"{config.OLLAMA_HOST}/api/tags")
-            with urllib.request.urlopen(req, timeout=1.5) as resp:
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             models = data.get("models", [])
             return [m.get("name") for m in models if m.get("name")]
@@ -294,14 +294,16 @@ class AppActionsMixin:
                             completed = line.get("completed", 0)
                             total = line.get("total", 0)
                             if on_progress:
-                                self.after(0, lambda c=completed, t=total, s=status: on_progress(c, t, s))
+                                self.call_in_ui_thread(
+                                    lambda c=completed, t=total, s=status: on_progress(c, t, s)
+                                )
                         except Exception:
                             pass
                 if on_complete:
-                    self.after(0, lambda: on_complete(True, None))
+                    self.call_in_ui_thread(lambda: on_complete(True, None))
             except Exception as e:
                 if on_complete:
-                    self.after(0, lambda err=e: on_complete(False, str(err)))
+                    self.call_in_ui_thread(lambda err=e: on_complete(False, str(err)))
                     
         t = threading.Thread(target=worker, daemon=True)
         t.start()

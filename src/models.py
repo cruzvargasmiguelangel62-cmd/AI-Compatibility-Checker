@@ -505,3 +505,117 @@ def _mark_recommended(rated: list[RatedModel]) -> None:
 
     for m in rated:
         m.recommended = m.id in recommended_ids
+
+
+# ---------------------------------------------------------------------------
+# Token speed estimation
+# ---------------------------------------------------------------------------
+
+_GPU_BW_GBS = {
+    "RTX 5090": 1792, "RTX 5080": 960, "RTX 4090": 1008,
+    "RTX 4080": 717, "RTX 4070 Ti": 504, "RTX 4070": 504,
+    "RTX 3090": 936, "RTX 3080": 760, "RTX 3070": 448,
+    "RTX 3060": 360, "RTX 3050": 224,
+    "RTX 2080": 448, "RTX 2070": 448, "RTX 2060": 336,
+    "GTX 1080": 320, "GTX 1070": 256, "GTX 1060": 192,
+    "RX 7900 XTX": 960, "RX 7900 XT": 800, "RX 7800 XT": 624,
+    "RX 7700 XT": 432, "RX 7600": 288,
+    "RX 6900 XT": 512, "RX 6800 XT": 512, "RX 6700 XT": 384,
+    "A100": 2039, "H100": 3350, "L40": 864,
+    "M1": 68, "M2": 100, "M3": 100, "M4": 100,
+}
+
+_CPU_BASE_TPS = {
+    "high": 12,
+    "medium": 6,
+    "low": 3,
+}
+
+
+def _infer_gpu_tier(gpu_name: str) -> str:
+    name_upper = (gpu_name or "").upper()
+    if any(x in name_upper for x in ("5090", "4090", "3090", "A100", "H100", "L40")):
+        return "high"
+    if any(x in name_upper for x in ("4080", "4070", "3080", "3070", "7900", "7800")):
+        return "high"
+    if any(x in name_upper for x in ("3060", "2080", "2070", "1080", "7700", "7600", "6800", "6700")):
+        return "medium"
+    if any(x in name_upper for x in ("3050", "2060", "1060", "1070")):
+        return "medium"
+    if any(x in name_upper for x in ("INTEL", "UHD", "HD", "VEGA", "RADEON GRAPHICS")):
+        return "low"
+    return "medium"
+
+
+def _get_gpu_bandwidth(gpu_name: str) -> float:
+    for key, bw in _GPU_BW_GBS.items():
+        if key.upper() in (gpu_name or "").upper():
+            return float(bw)
+    tier = _infer_gpu_tier(gpu_name)
+    return {"high": 500.0, "medium": 350.0, "low": 50.0}.get(tier, 350.0)
+
+
+def estimate_tokens_per_sec(model_vram_gb: float, specs: dict) -> dict:
+    hw = specs.get("hardware", specs)
+    gpus = hw.get("gpus") or []
+    best_gpu = max(gpus, key=lambda g: g.get("vram", 0.0), default=None)
+    total_ram = hw.get("ram", 8.0)
+    cores = hw.get("threads", hw.get("cores", 4))
+    has_avx2 = hw.get("has_avx2", False)
+
+    gpu_name = best_gpu["name"] if best_gpu else ""
+    gpu_vram = best_gpu["vram"] if best_gpu else 0.0
+    is_unified = best_gpu.get("unified", False) if best_gpu else False
+
+    model_bytes = model_vram_gb * (1024 ** 3)
+
+    if is_unified:
+        bw = _get_gpu_bandwidth(gpu_name)
+        tps = max(1.0, (bw * 1e9) / (model_bytes * 2)) if model_bytes > 0 else 1.0
+        return {"tps": round(min(tps, 200), 1), "backend": "unified"}
+
+    if gpu_vram >= model_vram_gb:
+        bw = _get_gpu_bandwidth(gpu_name)
+        tps = max(1.0, (bw * 1e9) / (model_bytes * 2)) if model_bytes > 0 else 1.0
+        return {"tps": round(min(tps, 200), 1), "backend": "GPU"}
+
+    cpu_tier = "high" if cores >= 12 and has_avx2 else "medium" if cores >= 6 else "low"
+    base = _CPU_BASE_TPS[cpu_tier]
+    scale = max(0.2, min(1.0, total_ram / max(1.0, model_vram_gb * 1.2)))
+    tps = max(0.5, base * scale * (model_vram_gb / max(model_vram_gb, 4.0)))
+    return {"tps": round(tps, 1), "backend": "CPU"}
+
+
+# ---------------------------------------------------------------------------
+# Use-case ranking
+# ---------------------------------------------------------------------------
+
+_USE_CASE_BOOST: dict[str, set[str]] = {
+    "code":        {"deepseek-coder", "qwen2.5-coder", "granite-code"},
+    "writing":     {"yi", "gemma", "mistral", "qwen"},
+    "analysis":    {"deepseek-r1", "phi", "mixtral", "glm"},
+    "translation": {"qwen", "llama"},
+    "vision":      {"llava", "qwen3-vl"},
+    "rag":         {"nomic-embed-text"},
+    "images":      set(),
+    "chat":        set(),
+}
+
+
+def rank_by_use_case(rated: list, use_case: str) -> list:
+    if use_case == "all" or use_case == "images":
+        return rated
+
+    boost_names = _USE_CASE_BOOST.get(use_case, set())
+
+    def _sort_key(m):
+        is_boost = 0
+        if boost_names:
+            name_lower = (m.get("name", "") + " " + m.get("ollama_tag", "")).lower()
+            if any(b in name_lower for b in boost_names):
+                is_boost = 1
+        tier_order = {"RUNS_GREAT": 0, "RUNS_WELL": 1, "DECENT_SLOW": 2, "TIGHT_FIT": 3, "TOO_HEAVY": 4}
+        tier = tier_order.get(m.get("status", "TOO_HEAVY"), 5)
+        return (-is_boost, tier, -m.get("vram_q4", 0))
+
+    return sorted(rated, key=_sort_key)

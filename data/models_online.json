@@ -9,7 +9,12 @@
     "ram_q4": 2.2,
     "description": "Modelo de razonamiento ultraligero. Excelente para ordenadores de gama baja o portátiles básicos.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:1.5b"
+    "ollama_tag": "deepseek-r1:1.5b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "deepseek_r1_8b",
@@ -21,7 +26,12 @@
     "ram_q4": 8.5,
     "description": "Modelo de razonamiento de alto nivel ideal para tareas complejas y programación. Excelente balance velocidad/calidad.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:8b"
+    "ollama_tag": "deepseek-r1:8b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "deepseek_r1_14b",
@@ -33,7 +43,12 @@
     "ram_q4": 15.0,
     "description": "Modelo intermedio de razonamiento avanzado. Ofrece respuestas muy precisas.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:14b"
+    "ollama_tag": "deepseek-r1:14b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "deepseek_r1_32b",
@@ -45,7 +60,12 @@
     "ram_q4": 33.0,
     "description": "Modelo de razonamiento potente para tareas complejas de nivel científico. Requiere hardware robusto.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:32b"
+    "ollama_tag": "deepseek-r1:32b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "deepseek_r1_70b",
@@ -57,7 +77,12 @@
     "ram_q4": 72.0,
     "description": "Modelo destilado de nivel superior. Capacidad de razonamiento similar a GPT-4o de forma local.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:70b"
+    "ollama_tag": "deepseek-r1:70b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "deepseek_r1_671b",
@@ -69,7 +94,12 @@
     "ram_q4": 410.0,
     "description": "El modelo de razonamiento de código abierto más potente del mundo a escala completa. Requiere hardware de servidor empresarial.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-r1:671b"
+    "ollama_tag": "deepseek-r1:671b",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "llama_3.2_1b",
@@ -81,7 +111,12 @@
     "ram_q4": 1.8,
     "description": "Modelo extremadamente rápido y ligero de Meta. Perfecto para dispositivos móviles o portátiles antiguos.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3.2:1b"
+    "ollama_tag": "llama3.2:1b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "llama_3.2_3b",
@@ -93,7 +128,12 @@
     "ram_q4": 3.5,
     "description": "Excelente para tareas simples y chats rápidos en hardware ligero.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3.2:3b"
+    "ollama_tag": "llama3.2:3b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "llama_3.1_8b",
@@ -105,7 +145,12 @@
     "ram_q4": 8.0,
     "description": "El modelo generalista más popular. Conversación natural, traducción y codificación ligera.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3.1:8b"
+    "ollama_tag": "llama3.1:8b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "llama_3.1_70b",
@@ -117,7 +162,12 @@
     "ram_q4": 70.0,
     "description": "Modelo de Meta de 70B. Capacidad analítica superior para procesamiento de texto complejo.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3.1:70b"
+    "ollama_tag": "llama3.1:70b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "llama_3.3_70b",
@@ -129,7 +179,12 @@
     "ram_q4": 70.0,
     "description": "Modelo insignia de Meta. Gran precisión pero requiere una estación de trabajo con alta potencia de VRAM/RAM.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3.3"
+    "ollama_tag": "llama3.3",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "phi_4_14b",
@@ -141,7 +196,12 @@
     "ram_q4": 14.5,
     "description": "Modelo compacto de Microsoft centrado en lógica de alta gama y razonamiento científico.",
     "provider": "Microsoft / Ollama",
-    "ollama_tag": "phi4"
+    "ollama_tag": "phi4",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "gpt_oss_20b",
@@ -153,7 +213,11 @@
     "ram_q4": 20.0,
     "description": "Modelo experimental de código abierto enfocado en lógica y razonamiento puro.",
     "provider": "OpenSource / Ollama",
-    "ollama_tag": "granite-code:20b"
+    "ollama_tag": "granite-code:20b",
+    "use_cases": [
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "mistral_small_3.1_24b",
@@ -165,7 +229,11 @@
     "ram_q4": 25.0,
     "description": "Modelo de Mistral AI optimizado para rendimiento en servidores domésticos o estaciones de trabajo.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mistral-small"
+    "ollama_tag": "mistral-small",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "gemma_3_27b",
@@ -177,7 +245,11 @@
     "ram_q4": 28.0,
     "description": "La última generación de Google Gemma. Nivel de razonamiento extremo en procesamiento de texto.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:27b"
+    "ollama_tag": "gemma2:27b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "qwen_3.5_9b",
@@ -189,7 +261,12 @@
     "ram_q4": 9.5,
     "description": "Modelo multilenguaje superlativo de Alibaba, excelente en lógica y conversación.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5:7b"
+    "ollama_tag": "qwen2.5:7b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "qwen_2.5_coder_32b",
@@ -201,7 +278,11 @@
     "ram_q4": 33.0,
     "description": "El mejor modelo de codificación local. Programación avanzada a nivel de GPT-4o.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5-coder:32b"
+    "ollama_tag": "qwen2.5-coder:32b",
+    "use_cases": [
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "gemma_2_2b",
@@ -213,7 +294,11 @@
     "ram_q4": 2.8,
     "description": "Modelo muy eficiente de Google. Respuestas rápidas y de alta calidad para su tamaño compacto.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:2b"
+    "ollama_tag": "gemma2:2b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "gemma_2_9b",
@@ -225,7 +310,11 @@
     "ram_q4": 9.5,
     "description": "Excelente para escritura y lógica. Supera a muchos modelos de 13B y 15B.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:9b"
+    "ollama_tag": "gemma2:9b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "gemma_2_27b",
@@ -237,7 +326,11 @@
     "ram_q4": 29.0,
     "description": "Rendimiento sobresaliente que se acerca a modelos de 70B pero a la mitad de su tamaño.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:27b"
+    "ollama_tag": "gemma2:27b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "mistral_7b_instruct",
@@ -249,7 +342,11 @@
     "ram_q4": 7.5,
     "description": "El clásico modelo de Mistral AI. Muy equilibrado y rápido en tareas sencillas.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mistral"
+    "ollama_tag": "mistral",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "mixtral_8x7b",
@@ -261,7 +358,11 @@
     "ram_q4": 38.0,
     "description": "Modelo MoE de Mistral AI. Ofrece velocidad de inferencia superior al activar solo partes de la red.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mixtral"
+    "ollama_tag": "mixtral",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "mixtral_8x22b",
@@ -273,7 +374,11 @@
     "ram_q4": 110.0,
     "description": "El modelo MoE gigante de Mistral AI. Excepcional razonamiento matemático y de código.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mixtral:8x22b"
+    "ollama_tag": "mixtral:8x22b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "qwen_2.5_7b",
@@ -285,7 +390,12 @@
     "ram_q4": 8.0,
     "description": "Gran capacidad de redacción y comprensión en español en solo 7B de parámetros.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5:7b"
+    "ollama_tag": "qwen2.5:7b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "qwen_2.5_14b",
@@ -297,7 +407,12 @@
     "ram_q4": 15.0,
     "description": "Muy recomendado para redacción avanzada y tareas que superan a los modelos de 8B.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5:14b"
+    "ollama_tag": "qwen2.5:14b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "qwen_2.5_72b",
@@ -309,7 +424,12 @@
     "ram_q4": 72.0,
     "description": "Uno de los modelos más grandes y capaces disponibles para correr en local de forma autónoma.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5:72b"
+    "ollama_tag": "qwen2.5:72b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "stable_diffusion_1.5",
@@ -321,7 +441,10 @@
     "ram_q4": 8.0,
     "description": "Generador de imágenes clásico y ligero. Cientos de modelos personalizados (checkpoints) disponibles en Civitai y HuggingFace.",
     "provider": "Stability AI",
-    "download_url": "https://huggingface.co/runwayml/stable-diffusion-v1-5"
+    "download_url": "https://huggingface.co/runwayml/stable-diffusion-v1-5",
+    "use_cases": [
+      "images"
+    ]
   },
   {
     "id": "stable_diffusion_xl",
@@ -333,7 +456,10 @@
     "ram_q4": 16.0,
     "description": "Estándar de calidad para imágenes fotorrealistas y artísticas de alta resolución (1024x1024).",
     "provider": "Stability AI",
-    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
+    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
+    "use_cases": [
+      "images"
+    ]
   },
   {
     "id": "stable_diffusion_3_med",
@@ -345,7 +471,10 @@
     "ram_q4": 12.0,
     "description": "La tercera generación de SD. Comprensión mejorada de prompts de texto y mejor renderizado de textos.",
     "provider": "Stability AI",
-    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-3-medium"
+    "download_url": "https://huggingface.co/stabilityai/stable-diffusion-3-medium",
+    "use_cases": [
+      "images"
+    ]
   },
   {
     "id": "flux_1_schnell",
@@ -357,7 +486,10 @@
     "ram_q4": 24.0,
     "description": "El modelo de generación de imágenes local más moderno y realista. Calidad extrema en solo 4 pasos de muestreo.",
     "provider": "Black Forest Labs",
-    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell"
+    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
+    "use_cases": [
+      "images"
+    ]
   },
   {
     "id": "flux_1_dev",
@@ -369,7 +501,10 @@
     "ram_q4": 28.0,
     "description": "El modelo de desarrollo de FLUX. Ofrece la máxima fidelidad y apego al prompt para generación de imágenes compleja.",
     "provider": "Black Forest Labs",
-    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-dev"
+    "download_url": "https://huggingface.co/black-forest-labs/FLUX.1-dev",
+    "use_cases": [
+      "images"
+    ]
   },
   {
     "id": "phi_3_mini",
@@ -381,7 +516,12 @@
     "ram_q4": 4.0,
     "description": "Modelo extremadamente rápido y ligero de Microsoft. Óptimo para dispositivos móviles o portátiles básicos.",
     "provider": "Microsoft / Ollama",
-    "ollama_tag": "phi3"
+    "ollama_tag": "phi3",
+    "use_cases": [
+      "analysis",
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "gemma_2b",
@@ -393,7 +533,11 @@
     "ram_q4": 2.8,
     "description": "Modelo superligero de Google. Ideal para tareas rápidas en hardware sumamente limitado.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:2b"
+    "ollama_tag": "gemma2:2b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "qwen2.5_3b",
@@ -405,7 +549,12 @@
     "ram_q4": 3.6,
     "description": "Modelo muy veloz y preciso. Excelente balance entre tamaño y soporte multilenguaje.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen2.5:3b"
+    "ollama_tag": "qwen2.5:3b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "mistral_7b",
@@ -417,7 +566,11 @@
     "ram_q4": 7.5,
     "description": "Modelo clásico y muy equilibrado. Ideal para conversaciones y tareas estructuradas sencillas.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mistral"
+    "ollama_tag": "mistral",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "llama3_8b",
@@ -429,7 +582,12 @@
     "ram_q4": 8.5,
     "description": "Modelo generalista muy popular. Respuestas naturales, traducción y razonamiento básico rápido.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3:8b"
+    "ollama_tag": "llama3:8b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "falcon_7b",
@@ -441,7 +599,11 @@
     "ram_q4": 7.5,
     "description": "Modelo ligero de TII. Eficiente para tareas básicas de automatización de texto.",
     "provider": "TII / Ollama",
-    "ollama_tag": "falcon:7b"
+    "ollama_tag": "falcon:7b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "glm4_9b",
@@ -453,7 +615,11 @@
     "ram_q4": 9.5,
     "description": "Modelo optimizado para llamadas a funciones (tool calling) y flujos basados en agentes.",
     "provider": "Zhipu / Ollama",
-    "ollama_tag": "glm4:9b"
+    "ollama_tag": "glm4:9b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "deepseek_coder_7b",
@@ -465,7 +631,11 @@
     "ram_q4": 8.0,
     "description": "Modelo optimizado específicamente para generación y depuración de código de software.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-coder:7b"
+    "ollama_tag": "deepseek-coder:7b",
+    "use_cases": [
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "gemma_9b",
@@ -477,7 +647,11 @@
     "ram_q4": 9.5,
     "description": "Excelente modelo de Google para redacción y lógica. Supera a muchos modelos de mayor tamaño.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:9b"
+    "ollama_tag": "gemma2:9b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "nomic_embed_text",
@@ -489,7 +663,10 @@
     "ram_q4": 0.8,
     "description": "Modelo de embeddings extremadamente ligero e ideal para búsquedas semánticas y sistemas RAG.",
     "provider": "Nomic / Ollama",
-    "ollama_tag": "nomic-embed-text"
+    "ollama_tag": "nomic-embed-text",
+    "use_cases": [
+      "rag"
+    ]
   },
   {
     "id": "qwen3_14b",
@@ -501,7 +678,12 @@
     "ram_q4": 15.0,
     "description": "Modelo intermedio de Qwen3. Ideal para agentes de IA complejos y razonamiento extendido en varios idiomas.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen3:14b"
+    "ollama_tag": "qwen3:14b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "mistral_medium_22b",
@@ -513,7 +695,11 @@
     "ram_q4": 23.0,
     "description": "Modelo intermedio de Mistral AI con gran capacidad de análisis literario y técnico.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mistral-medium"
+    "ollama_tag": "mistral-medium",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "llama3_70b_opt",
@@ -525,7 +711,12 @@
     "ram_q4": 70.0,
     "description": "Versión de 70B optimizada. Gran capacidad analítica para procesamiento de texto complejo localmente.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama3:70b"
+    "ollama_tag": "llama3:70b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "gemma_27b",
@@ -537,7 +728,11 @@
     "ram_q4": 29.0,
     "description": "Rendimiento sobresaliente que se acerca a modelos de 70B pero a la mitad de su tamaño.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma2:27b"
+    "ollama_tag": "gemma2:27b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "falcon_40b",
@@ -549,7 +744,11 @@
     "ram_q4": 42.0,
     "description": "Modelo intermedio de la familia Falcon. Buen rendimiento en procesamiento matemático básico.",
     "provider": "TII / Ollama",
-    "ollama_tag": "falcon:40b"
+    "ollama_tag": "falcon:40b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "glm4_32b",
@@ -561,7 +760,11 @@
     "ram_q4": 33.0,
     "description": "Modelo de tamaño mediano altamente capaz en razonamiento lógico y flujos avanzados.",
     "provider": "Zhipu / Ollama",
-    "ollama_tag": "glm4:32b"
+    "ollama_tag": "glm4:32b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "yi_34b",
@@ -573,7 +776,12 @@
     "ram_q4": 36.0,
     "description": "Modelo de 01.AI enfocado en la escritura creativa y excelente soporte multilingüe.",
     "provider": "01.AI / Ollama",
-    "ollama_tag": "yi:34b"
+    "ollama_tag": "yi:34b",
+    "use_cases": [
+      "writing",
+      "translation",
+      "chat"
+    ]
   },
   {
     "id": "llama4_70b",
@@ -585,7 +793,12 @@
     "ram_q4": 72.0,
     "description": "Modelo insignia multimodal de Meta Llama 4. Máxima precisión en análisis visual e inferencia.",
     "provider": "Meta / Ollama",
-    "ollama_tag": "llama4:70b"
+    "ollama_tag": "llama4:70b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "qwen3_72b",
@@ -597,7 +810,12 @@
     "ram_q4": 72.0,
     "description": "Modelo masivo de Alibaba. Rendimiento extraordinario en programación y resolución de problemas complejos.",
     "provider": "Alibaba / Ollama",
-    "ollama_tag": "qwen3:72b"
+    "ollama_tag": "qwen3:72b",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "gemma4_50b",
@@ -609,7 +827,11 @@
     "ram_q4": 52.0,
     "description": "La última generación de Google Gemma 4. Modelo de gran escala con soporte multimodal nativo de texto e imágenes.",
     "provider": "Google / Ollama",
-    "ollama_tag": "gemma4:50b"
+    "ollama_tag": "gemma4:50b",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "mistral_large_2026",
@@ -621,7 +843,11 @@
     "ram_q4": 110.0,
     "description": "Modelo comercial insignia de Mistral AI para tareas corporativas locales complejas.",
     "provider": "Mistral AI / Ollama",
-    "ollama_tag": "mistral-large"
+    "ollama_tag": "mistral-large",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "glm4_128b",
@@ -633,7 +859,11 @@
     "ram_q4": 130.0,
     "description": "El modelo a gran escala de Zhipu. Diseñado para tareas complejas y orquestación multi-agente.",
     "provider": "Zhipu / Ollama",
-    "ollama_tag": "glm4:128b"
+    "ollama_tag": "glm4:128b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "deepseek_coder_v2_32b",
@@ -645,7 +875,11 @@
     "ram_q4": 33.0,
     "description": "Modelo de programación avanzado de DeepSeek. Supera la capacidad de código de modelos generalistas.",
     "provider": "DeepSeek / Ollama",
-    "ollama_tag": "deepseek-coder-v2:32b"
+    "ollama_tag": "deepseek-coder-v2:32b",
+    "use_cases": [
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "falcon_180b",
@@ -657,7 +891,11 @@
     "ram_q4": 185.0,
     "description": "Uno de los mayores modelos densos de código abierto. Excepcional razonamiento a gran escala.",
     "provider": "TII / Ollama",
-    "ollama_tag": "falcon:180b"
+    "ollama_tag": "falcon:180b",
+    "use_cases": [
+      "chat",
+      "analysis"
+    ]
   },
   {
     "id": "yi_100b",
@@ -669,7 +907,12 @@
     "ram_q4": 105.0,
     "description": "Modelo a gran escala de 01.AI enfocado en razonamiento semántico avanzado y procesamiento de texto.",
     "provider": "01.AI / Ollama",
-    "ollama_tag": "yi:100b"
+    "ollama_tag": "yi:100b",
+    "use_cases": [
+      "writing",
+      "translation",
+      "chat"
+    ]
   },
   {
     "id": "llava_1.6",
@@ -681,7 +924,11 @@
     "ram_q4": 8.5,
     "description": "Modelo de visión de código abierto. Habilita la entrada de texto e imágenes localmente.",
     "provider": "Open-weight / Ollama",
-    "ollama_tag": "llava"
+    "ollama_tag": "llava",
+    "use_cases": [
+      "chat",
+      "vision"
+    ]
   },
   {
     "id": "hauhaucs_qwen3.6_35b_a3b_uncensored_hauhaucs_aggressive",
@@ -693,7 +940,12 @@
     "ram_q4": 34.2,
     "description": "Modelo Qwen3.6 35b A3b Uncensored Hauhaucs Aggressive alojado en Hugging Face (HauhauCS). Descubierto y analizado de forma automática.",
     "provider": "HauhauCS / Ollama",
-    "ollama_tag": "qwen3:35"
+    "ollama_tag": "qwen3:35",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "andycurrent_gemma_3_1b_it_glm_4.7_flash_heretic_uncensored_thinking_gguf",
@@ -705,7 +957,11 @@
     "ram_q4": 1.9,
     "description": "Modelo Gemma 3 1b It Glm 4.7 Flash Heretic Uncensored Thinking_gguf alojado en Hugging Face (Andycurrent). Descubierto y analizado de forma automática.",
     "provider": "Andycurrent / Ollama",
-    "ollama_tag": "gemma3:1"
+    "ollama_tag": "gemma3:1",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_gemma_4_26b_a4b_it_gguf",
@@ -717,7 +973,11 @@
     "ram_q4": 25.7,
     "description": "Modelo Gemma 4 26b A4b It alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "gemma2:26"
+    "ollama_tag": "gemma2:26",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_gemma_4_12b_it_gguf",
@@ -729,7 +989,11 @@
     "ram_q4": 12.4,
     "description": "Modelo Gemma 4 12b It alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "gemma2:12"
+    "ollama_tag": "gemma2:12",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_qwen3.6_27b_gguf",
@@ -741,7 +1005,12 @@
     "ram_q4": 26.6,
     "description": "Modelo Qwen3.6 27b alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "qwen3:27"
+    "ollama_tag": "qwen3:27",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_gemma_4_e4b_it_gguf",
@@ -753,7 +1022,11 @@
     "ram_q4": 4.8,
     "description": "Modelo Gemma 4 E4b It alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "gemma4:4"
+    "ollama_tag": "gemma4:4",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_qwen3.5_9b_gguf",
@@ -765,7 +1038,12 @@
     "ram_q4": 9.5,
     "description": "Modelo Qwen3.5 9b alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "qwen3:9"
+    "ollama_tag": "qwen3:9",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_gemma_4_e2b_it_gguf",
@@ -777,7 +1055,11 @@
     "ram_q4": 2.9,
     "description": "Modelo Gemma 4 E2b It alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "gemma2:2"
+    "ollama_tag": "gemma2:2",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "rippertnt_hyperclovax_seed_text_instruct_1.5b_q4_k_m_gguf",
@@ -789,7 +1071,10 @@
     "ram_q4": 2.4,
     "description": "Modelo Hyperclovax Seed Text Instruct 1.5b Q4_k_m alojado en Hugging Face (rippertnt). Descubierto y analizado de forma automática.",
     "provider": "rippertnt / HuggingFace",
-    "download_url": "https://huggingface.co/rippertnt/HyperCLOVAX-SEED-Text-Instruct-1.5B-Q4_K_M-GGUF"
+    "download_url": "https://huggingface.co/rippertnt/HyperCLOVAX-SEED-Text-Instruct-1.5B-Q4_K_M-GGUF",
+    "use_cases": [
+      "chat"
+    ]
   },
   {
     "id": "unsloth_qwen3_vl_2b_instruct_gguf",
@@ -801,7 +1086,11 @@
     "ram_q4": 2.9,
     "description": "Modelo Qwen3 Vl 2b Instruct alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "qwen3:2"
+    "ollama_tag": "qwen3:2",
+    "use_cases": [
+      "chat",
+      "vision"
+    ]
   },
   {
     "id": "unsloth_qwen3.5_4b_gguf",
@@ -813,7 +1102,12 @@
     "ram_q4": 4.8,
     "description": "Modelo Qwen3.5 4b alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "qwen3:4"
+    "ollama_tag": "qwen3:4",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_qwen3_30b_a3b_instruct_2507_gguf",
@@ -825,7 +1119,12 @@
     "ram_q4": 29.5,
     "description": "Modelo Qwen3 30b A3b Instruct 2507 alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "qwen3:30"
+    "ollama_tag": "qwen3:30",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "lmg_anon_vntl_llama3_8b_v2_gguf",
@@ -837,7 +1136,12 @@
     "ram_q4": 8.6,
     "description": "Modelo Vntl Llama3 8b V2 alojado en Hugging Face (lmg-anon). Descubierto y analizado de forma automática.",
     "provider": "lmg-anon / Ollama",
-    "ollama_tag": "llama3:8"
+    "ollama_tag": "llama3:8",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "unsloth_gemma_4_31b_it_gguf",
@@ -849,7 +1153,11 @@
     "ram_q4": 30.4,
     "description": "Modelo Gemma 4 31b It alojado en Hugging Face (unsloth). Descubierto y analizado de forma automática.",
     "provider": "unsloth / Ollama",
-    "ollama_tag": "gemma3:31"
+    "ollama_tag": "gemma3:31",
+    "use_cases": [
+      "chat",
+      "writing"
+    ]
   },
   {
     "id": "hugging_quants_llama_3.2_1b_instruct_q8_0_gguf",
@@ -861,7 +1169,12 @@
     "ram_q4": 1.9,
     "description": "Modelo Llama 3.2 1b Instruct Q8_0 alojado en Hugging Face (hugging-quants). Descubierto y analizado de forma automática.",
     "provider": "hugging-quants / Ollama",
-    "ollama_tag": "llama3:1"
+    "ollama_tag": "llama3:1",
+    "use_cases": [
+      "chat",
+      "translation",
+      "writing"
+    ]
   },
   {
     "id": "davidau_qwen3.6_40b_claude_4.6_opus_deckard_heretic_uncensored_thinking_neo_code_di_imatrix_max_gguf",
@@ -873,7 +1186,11 @@
     "ram_q4": 39.0,
     "description": "Modelo Qwen3.6 40b Claude 4.6 Opus Deckard Heretic Uncensored Thinking Neo Code Di Imatrix Max alojado en Hugging Face (DavidAU). Descubierto y analizado de forma automática.",
     "provider": "DavidAU / Ollama",
-    "ollama_tag": "qwen3:40"
+    "ollama_tag": "qwen3:40",
+    "use_cases": [
+      "code",
+      "chat"
+    ]
   },
   {
     "id": "vltx_vertalily_1.2_1b_gguf",
@@ -885,6 +1202,39 @@
     "ram_q4": 1.9,
     "description": "Modelo Vertalily 1.2 1b alojado en Hugging Face (VLTX). Descubierto y analizado de forma automática.",
     "provider": "VLTX / HuggingFace",
-    "download_url": "https://huggingface.co/VLTX/VertaLily-1.2-1B-GGUF"
+    "download_url": "https://huggingface.co/VLTX/VertaLily-1.2-1B-GGUF",
+    "use_cases": [
+      "chat"
+    ]
+  },
+  {
+    "id": "empero_ai_qwythos_9b_claude_mythos_5_1m_gguf",
+    "name": "Qwythos 9b Claude Mythos 5 1m",
+    "category": "Text (LLM)",
+    "params": "9 Billion",
+    "context": "8K ctx",
+    "vram_q4": 5.9,
+    "ram_q4": 9.5,
+    "description": "Modelo Qwythos 9b Claude Mythos 5 1m alojado en Hugging Face (empero-ai). Descubierto y analizado de forma automática.",
+    "provider": "empero-ai / HuggingFace",
+    "download_url": "https://huggingface.co/empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF",
+    "use_cases": [
+      "chat"
+    ]
+  },
+  {
+    "id": "speakleash_bielik_11b_v3.0_instruct_awq",
+    "name": "Bielik 11b V3.0 Instruct Awq",
+    "category": "Text (LLM)",
+    "params": "11 Billion",
+    "context": "8K ctx",
+    "vram_q4": 7.1,
+    "ram_q4": 11.4,
+    "description": "Modelo Bielik 11b V3.0 Instruct Awq alojado en Hugging Face (speakleash). Descubierto y analizado de forma automática.",
+    "provider": "speakleash / HuggingFace",
+    "download_url": "https://huggingface.co/speakleash/Bielik-11B-v3.0-Instruct-awq",
+    "use_cases": [
+      "chat"
+    ]
   }
 ]

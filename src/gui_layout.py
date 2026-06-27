@@ -148,8 +148,6 @@ class AppLayoutMixin:
         )
         self.sidebar._scrollbar.configure(width=8, corner_radius=4)
         self.sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-        self.build_sidebar()
-        self._bind_mousewheel_to_frame(self.sidebar)
 
         self.main_container = ctk.CTkFrame(self, corner_radius=0, fg_color=self.bg_color)
         self.main_container.grid(
@@ -161,6 +159,14 @@ class AppLayoutMixin:
         )
         self.main_container.grid_columnconfigure(0, weight=1)
         self.main_container.grid_rowconfigure(3, weight=1)
+
+        self.after(0, self._build_deferred_layout_sections)
+
+    def _build_deferred_layout_sections(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        self.build_sidebar()
+        self._bind_mousewheel_to_frame(self.sidebar)
 
         self.rec_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.rec_frame.grid(row=1, column=0, sticky="ew", pady=(0, self.ui_tokens["section_gap"]))
@@ -556,6 +562,37 @@ class AppLayoutMixin:
         self.main_desc.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
         self._bind_label_to_container_width(self.header_frame, self.main_desc, horizontal_padding=32, minimum=160)
 
+        self.use_case_frame = ctk.CTkFrame(self.header_frame, fg_color="transparent")
+        self.use_case_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+        self.use_case_label = ctk.CTkLabel(
+            self.use_case_frame,
+            text=UI_TEXT.get("use_case_label", "¿Que necesitas?"),
+            font=self._font("sidebar_text_small", weight="bold"),
+            text_color=self.text_muted,
+        )
+        self.use_case_label.pack(side="left", padx=(0, 8))
+
+        self.use_case_buttons = {}
+        uc_config = config.USE_CASES
+        for key, meta in uc_config.items():
+            lang = self.active_language if hasattr(self, "active_language") else "es"
+            label = meta[f"label_{lang}"]
+            icon = meta["icon"]
+            btn = ctk.CTkButton(
+                self.use_case_frame,
+                text=f"{icon} {label}",
+                font=self._font("action"),
+                height=28,
+                corner_radius=8,
+                fg_color=UI_COLORS["button_secondary"] if key != "all" else UI_COLORS["hover"],
+                hover_color=UI_COLORS["hover"],
+                text_color=UI_COLORS["white"],
+                command=lambda k=key: self.on_use_case_change(k),
+            )
+            btn.pack(side="left", padx=(0, 4))
+            self.use_case_buttons[key] = btn
+
         self.control_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.control_frame.grid(row=2, column=0, sticky="ew", pady=(self.ui_tokens["section_gap"], self.ui_tokens["section_gap"]))
         self.control_frame.grid_columnconfigure(0, weight=1)
@@ -847,6 +884,10 @@ class AppLayoutMixin:
             return False
         if self.active_category == config.MODEL_TEXT["image_category"] and model["category"] != config.MODEL_TEXT["image_category"]:
             return False
+        if self.active_use_case != "all":
+            model_cases = model.get("use_cases", [])
+            if self.active_use_case not in model_cases:
+                return False
         if self.search_query:
             name_match = self.search_query in model["name"].lower()
             desc_match = self.search_query in model["description"].lower()
@@ -938,13 +979,14 @@ class AppLayoutMixin:
         if hasattr(self, "guide_frame") and self.guide_frame.winfo_manager():
             self.guide_frame.pack_forget()
 
-        self.pending_models = list(self.rated_models)
+        from src.models import rank_by_use_case
+        self.pending_models = rank_by_use_case(list(self.rated_models), self.active_use_case)
         self._schedule_widgets_destruction()
         self._schedule_model_render()
 
     def _schedule_widgets_destruction(self):
         if not hasattr(self, "destroy_job") or self.destroy_job is None:
-            self.destroy_job = self.after(20, self._destroy_widgets_batch)
+            self.destroy_job = self.after(5, self._destroy_widgets_batch)
 
     def _destroy_widgets_batch(self):
         if self.is_closing or not self.winfo_exists():
@@ -953,9 +995,9 @@ class AppLayoutMixin:
         if not hasattr(self, "widgets_to_destroy") or not self.widgets_to_destroy:
             return
             
-        # Destroy top-level row frames in batches of 2 (recursive destruction handles their children)
-        batch = self.widgets_to_destroy[:2]
-        self.widgets_to_destroy = self.widgets_to_destroy[2:]
+        # Destroy top-level row frames in batches of 20 (recursive destruction handles their children)
+        batch = self.widgets_to_destroy[:20]
+        self.widgets_to_destroy = self.widgets_to_destroy[20:]
         
         for widget in batch:
             try:
@@ -965,7 +1007,7 @@ class AppLayoutMixin:
                 pass
                 
         if self.widgets_to_destroy:
-            self.destroy_job = self.after(20, self._destroy_widgets_batch)
+            self.destroy_job = self.after(5, self._destroy_widgets_batch)
 
     def _schedule_model_render(self):
         if self.is_closing or not self.winfo_exists():
@@ -997,7 +1039,7 @@ class AppLayoutMixin:
         self._update_empty_state()
 
         if self.pending_models:
-            self.render_job = self.after(20, self._render_model_batch)
+            self.render_job = self.after(5, self._render_model_batch)
         else:
             if hasattr(self, "guide_frame"):
                 self.guide_frame.pack(fill="x", pady=(12, 4))
@@ -1009,8 +1051,8 @@ class AppLayoutMixin:
 
         row = ctk.CTkFrame(parent, fg_color=self.card_color, border_color=border_c, border_width=border_w, corner_radius=10)
         row.pack(fill="x", pady=4, ipady=2)
-        row.grid_columnconfigure(0, weight=1, minsize=0)
-        row.grid_columnconfigure(1, weight=0, minsize=0)
+        row.grid_columnconfigure(0, weight=0, minsize=0)
+        row.grid_columnconfigure(1, weight=1, minsize=0)
 
         def on_enter(_):
             row.configure(border_color=self.hover_color)
@@ -1021,8 +1063,22 @@ class AppLayoutMixin:
         row.bind("<Enter>", on_enter)
         row.bind("<Leave>", on_leave)
 
+        compare_var = tk.BooleanVar(value=False)
+        compare_cb = ctk.CTkCheckBox(
+            row,
+            text="",
+            variable=compare_var,
+            fg_color=UI_COLORS["hover"],
+            hover_color=UI_COLORS["button_blue_hover"],
+            width=20,
+            height=20,
+            command=lambda: self._toggle_comparison(model, compare_var.get()),
+        )
+        compare_cb.grid(row=0, column=0, sticky="nw", padx=(8, 0), pady=(12, 0))
+        row.compare_cb = compare_cb
+
         info_frame = ctk.CTkFrame(row, fg_color="transparent")
-        info_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
+        info_frame.grid(row=0, column=1, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
         info_frame.grid_columnconfigure(0, weight=1, minsize=0)
         info_frame.grid_columnconfigure(1, weight=0, minsize=0)
 
@@ -1058,7 +1114,21 @@ class AppLayoutMixin:
 
         provider = model.get("provider", "")
         provider_part = f" • {provider}" if provider else ""
-        meta_str = f"{model['category']} • {model['params']} • {model['context']}{provider_part}"
+
+        speed_str = ""
+        if self.specs is not None and model["category"] != config.MODEL_TEXT["image_category"]:
+            from src.models import estimate_tokens_per_sec
+            speed_info = estimate_tokens_per_sec(model["vram_q4"], self.specs)
+            tps = speed_info["tps"]
+            backend = speed_info["backend"]
+            if backend == "GPU":
+                speed_str = f" • ⚡ ~{tps} tok/s"
+            elif backend == "unified":
+                speed_str = f" • ⚡ ~{tps} tok/s"
+            else:
+                speed_str = f" • 🐢 ~{tps} tok/s" if tps < 5 else f" • ⚡ ~{tps} tok/s"
+
+        meta_str = f"{model['category']} • {model['params']} • {model['context']}{speed_str}{provider_part}"
         m_meta = ctk.CTkLabel(
             info_frame,
             text=meta_str,
@@ -1300,6 +1370,15 @@ class AppLayoutMixin:
 
         resize_container.bind("<Configure>", _sync_action_layout, add="+")
 
+    def on_use_case_change(self, use_case):
+        self.active_use_case = use_case
+        for key, btn in self.use_case_buttons.items():
+            if key == use_case:
+                btn.configure(fg_color=UI_COLORS["hover"])
+            else:
+                btn.configure(fg_color=UI_COLORS["button_secondary"])
+        self.apply_filter()
+
     def on_quant_change(self, value):
         self.active_quantization = value
         self._trigger_recalc()
@@ -1317,14 +1396,9 @@ class AppLayoutMixin:
             self._trigger_recalc()
 
     def _trigger_recalc(self):
-        from src.models import evaluate_compatibility
         if self.specs is not None:
-            rated_models, self.online_mode = evaluate_compatibility(
-                self.specs,
-                quantization=self.active_quantization,
-                context_size=self.active_context_size,
-            )
-            self.rated_models = self._normalize_rated_models(rated_models)
+            rated_models, self.online_mode = self.evaluate_compatibility_with_local()
+            self._store_compatibility_results(rated_models, self.online_mode)
             self.update_scan_results()
 
     def copy_specs_report(self):
@@ -1333,34 +1407,40 @@ class AppLayoutMixin:
         import platform
         hw = self.specs.get("hardware", {})
         sw = self.specs.get("software", {})
-        
+
         report = []
-        report.append("# AI Compatibility Checker Report 🖥️")
-        report.append(f"**Generated**: {platform.node()} ({platform.system()} {platform.release()})")
-        report.append("\n## Hardware Specs")
-        report.append(f"- **OS**: {hw.get('os_pretty', hw.get('os'))}")
-        report.append(f"- **CPU**: {hw.get('cpu_name')} ({hw.get('cores')} Cores, {hw.get('threads')} Threads)")
-        report.append(f"- **AVX2 Support**: {'Yes' if hw.get('has_avx2') else 'No'}")
-        report.append(f"- **RAM**: {hw.get('ram')} GB")
-        
-        report.append("\n## GPUs")
-        for idx, gpu in enumerate(hw.get("gpus", [])):
-            vram_type = "Unified" if gpu.get("unified") else "Dedicated"
-            report.append(f"{idx+1}. **{gpu.get('name')}**")
-            report.append(f"   - VRAM: {gpu.get('vram')} GB ({vram_type})")
-            if gpu.get("driver_version"):
-                report.append(f"   - Driver: {gpu.get('driver_version')}")
-                
-        report.append("\n## Software Runtimes")
-        py = sw.get("python", {})
-        report.append(f"- **Python**: {py.get('version')} ({py.get('env_type', 'system')})")
-        cuda = sw.get("cuda", {})
-        if cuda.get("available"):
-            report.append(f"- **CUDA**: Supported (Driver: {cuda.get('driver_version')})")
-        rocm = sw.get("rocm", {})
-        if rocm.get("available"):
-            report.append(f"- **ROCm**: Supported (Version: {rocm.get('version')})")
-            
+        report.append("# Mi Perfil de Hardware para IA 🖥️")
+        report.append(f"**{platform.node()}** ({platform.system()} {platform.release()})")
+        report.append("")
+        report.append("## Specs")
+        report.append(f"- OS: {hw.get('os_pretty', hw.get('os'))}")
+        report.append(f"- CPU: {hw.get('cpu_name')} ({hw.get('cores')} Cores, {hw.get('threads')} Threads)")
+        report.append(f"- RAM: {hw.get('ram')} GB")
+        gpus = hw.get("gpus", [])
+        if gpus:
+            gpu = gpus[0]
+            vram_type = "Unificada" if gpu.get("unified") else "Dedicada"
+            report.append(f"- GPU: {gpu.get('name')} ({gpu.get('vram')} GB {vram_type})")
+
+        can_run = [m for m in self.rated_models if m.get("status") in ("RUNS_GREAT", "RUNS_WELL")]
+        cannot_run = [m for m in self.rated_models if m.get("status") == "TOO_HEAVY"]
+
+        if can_run:
+            report.append("")
+            report.append(f"## ✅ Puedo correr ({len(can_run)})")
+            for m in can_run[:10]:
+                report.append(f"- **{m['name']}** ({m['status_label']}) - {m['vram_q4']}GB VRAM")
+            if len(can_run) > 10:
+                report.append(f"- ... y {len(can_run) - 10} modelos mas")
+
+        if cannot_run:
+            report.append("")
+            report.append(f"## ❌ No puedo correr ({len(cannot_run)})")
+            for m in cannot_run[:5]:
+                report.append(f"- **{m['name']}** - Requiere ~{m['vram_q4']}GB VRAM")
+            if len(cannot_run) > 5:
+                report.append(f"- ... y {len(cannot_run) - 5} modelos mas")
+
         report_text = "\n".join(report)
         self.copy_to_clipboard(report_text)
 
@@ -1368,6 +1448,23 @@ class AppLayoutMixin:
         self.side_title.configure(text=config.UI_TEXT["sidebar_title"])
         self.side_subtitle.configure(text=config.UI_TEXT["sidebar_subtitle"])
         self.soft_title.configure(text=config.UI_TEXT["software_title"])
+        self.soft_subtitle.configure(text=config.UI_TEXT["software_subtitle"])
+        self.main_title.configure(text=config.UI_TEXT["main_title"])
+        self.main_desc.configure(text=config.UI_TEXT["main_description"])
+        self.search_entry.configure(placeholder_text=config.UI_TEXT["search_placeholder"])
+        self.guide_title.configure(text=config.UI_TEXT["guide_title"])
+        self.guide_label.configure(text=config.UI_TEXT["guide_text"])
+        self.rescan_btn.configure(text=config.UI_TEXT["analyze"] if self.specs is None else config.UI_TEXT["rescan"])
+
+        if hasattr(self, "use_case_label"):
+            self.use_case_label.configure(text=UI_TEXT.get("use_case_label", "¿Que necesitas?"))
+            uc_config = config.USE_CASES
+            for key, btn in self.use_case_buttons.items():
+                meta = uc_config[key]
+                lang = self.active_language
+                label = meta[f"label_{lang}"]
+                icon = meta["icon"]
+                btn.configure(text=f"{icon} {label}")
         self.soft_subtitle.configure(text=config.UI_TEXT["software_subtitle"])
         self.main_title.configure(text=config.UI_TEXT["main_title"])
         self.main_desc.configure(text=config.UI_TEXT["main_description"])

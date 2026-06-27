@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import platform
+import queue
 import threading
 import tkinter as tk
 
@@ -36,6 +37,10 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         self.is_closing = False
         self.loading_modal = None
         self.guide_visible = True
+        self._last_ollama_signature = None
+        self._last_rated_models_signature = None
+        self._ui_queue = queue.Queue()
+        self._ui_queue_job = None
 
         ctk.set_appearance_mode(config.APP_THEME)
         ctk.set_default_color_theme(config.APP_COLOR_THEME)
@@ -55,8 +60,11 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         self.specs = None
         self.rated_models = []
         self.active_category = UI_BASE["search_categories"][0]
+        self.active_use_case = "all"
         self.search_query = ""
         self.online_mode = False
+        self.comparison_models = []
+        self._new_models_pending = []
 
         self.active_quantization = config.DEFAULT_QUANTIZATION
         self.active_context_size = config.DEFAULT_CONTEXT_SIZE
@@ -65,11 +73,14 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         self.ollama_api_online = False
         self.change_language(self.active_language)
 
+        self._ollama_poll_job = None
         self.create_layout()
         self.bind("<Configure>", self._on_window_resize)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.load_cached_snapshot()
-        self.refresh_installed_ollama_models()
+        self._schedule_ui_queue_drain()
+        # Defer all heavy work so the window can paint its first frame before blocking
+        self.after(50, self._startup_sequence)
+
 
     def _normalize_rated_models(self, rated_models):
         normalized = []
@@ -79,6 +90,67 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             elif isinstance(model, dict):
                 normalized.append(model)
         return normalized
+
+    def _build_ollama_signature(self, online, models):
+        normalized_models = tuple(sorted((model or "").strip().lower() for model in models or []))
+        return online, normalized_models
+
+    def _build_rated_models_signature(self, rated_models):
+        normalized = self._normalize_rated_models(rated_models)
+        return tuple(
+            (
+                model.get("id"),
+                model.get("status"),
+                model.get("recommended"),
+                model.get("vram_q4"),
+                model.get("ram_q4"),
+                model.get("ollama_tag"),
+            )
+            for model in normalized
+        )
+
+    def _store_compatibility_results(self, rated_models, online_mode):
+        normalized = self._normalize_rated_models(rated_models)
+        new_signature = self._build_rated_models_signature(normalized)
+        changed = (
+            new_signature != self._last_rated_models_signature
+            or online_mode != self.online_mode
+        )
+        self.online_mode = online_mode
+        self.rated_models = normalized
+        self._last_rated_models_signature = new_signature
+        return changed
+
+    def call_in_ui_thread(self, callback):
+        if self.is_closing:
+            return False
+        self._ui_queue.put(callback)
+        return True
+
+    def _schedule_ui_queue_drain(self):
+        if self.is_closing:
+            return
+        self._ui_queue_job = self.after(16, self._drain_ui_queue)
+
+    def _drain_ui_queue(self):
+        self._ui_queue_job = None
+        if self.is_closing:
+            return
+        drained = 0
+        for _ in range(50):
+            try:
+                callback = self._ui_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                callback()
+                drained += 1
+            except Exception:
+                pass
+        # Always reschedule — background threads add items asynchronously.
+        # Use a longer interval when idle to reduce wake-ups.
+        interval = 16 if drained > 0 else 200
+        self._ui_queue_job = self.after(interval, self._drain_ui_queue)
 
     def _get_local_extra_models(self) -> list[dict]:
         extra_models = []
@@ -121,20 +193,20 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                     except ValueError:
                         pass
                 else:
-                    if "7b" in tag_lower:
-                        params_b = 7.0
-                    elif "8b" in tag_lower:
-                        params_b = 8.0
-                    elif "70b" in tag_lower:
+                    if "70b" in tag_lower:
                         params_b = 70.0
-                    elif "1.5b" in tag_lower:
-                        params_b = 1.5
-                    elif "3b" in tag_lower:
-                        params_b = 3.0
-                    elif "13b" in tag_lower:
-                        params_b = 13.0
                     elif "32b" in tag_lower:
                         params_b = 32.0
+                    elif "13b" in tag_lower:
+                        params_b = 13.0
+                    elif "8b" in tag_lower:
+                        params_b = 8.0
+                    elif "7b" in tag_lower:
+                        params_b = 7.0
+                    elif "3b" in tag_lower:
+                        params_b = 3.0
+                    elif "1.5b" in tag_lower:
+                        params_b = 1.5
 
                 vram_est = round(params_b * 0.6 + 0.5, 1)
                 ram_est = round(params_b * 0.95 + 1.0, 1)
@@ -169,7 +241,198 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             extra_models=extra
         )
 
+    def _toggle_comparison(self, model, checked):
+        if checked:
+            if len(self.comparison_models) >= 4:
+                return
+            if model not in self.comparison_models:
+                self.comparison_models.append(model)
+        else:
+            if model in self.comparison_models:
+                self.comparison_models.remove(model)
+        self._update_compare_button()
+
+    def _update_compare_button(self):
+        count = len(self.comparison_models)
+        if count >= 2:
+            if not hasattr(self, "compare_floating_btn") or self.compare_floating_btn is None:
+                import customtkinter as ctk
+                self.compare_floating_btn = ctk.CTkButton(
+                    self.main_container,
+                    text=UI_TEXT.get("compare_btn", "Comparar").format(count=count),
+                    font=self._font("action", weight="bold"),
+                    fg_color="#7C3AED",
+                    hover_color="#6D28D9",
+                    text_color=UI_COLORS["white"],
+                    height=36,
+                    corner_radius=18,
+                    command=self.show_comparison_modal,
+                )
+            self.compare_floating_btn.configure(
+                text=UI_TEXT.get("compare_btn", "Comparar").format(count=count)
+            )
+            self.compare_floating_btn.place(relx=1.0, rely=1.0, x=-20, y=-20, anchor="se")
+        elif hasattr(self, "compare_floating_btn") and self.compare_floating_btn is not None:
+            self.compare_floating_btn.place_forget()
+
+    def show_comparison_modal(self):
+        if not self.comparison_models:
+            return
+        import customtkinter as ctk
+
+        modal = ctk.CTkToplevel(self)
+        modal.title(UI_TEXT.get("compare_title", "Comparar Modelos"))
+        modal.geometry("700x400")
+        modal.resizable(True, False)
+        modal.transient(self)
+        modal.grab_set()
+        modal.configure(fg_color=UI_COLORS["background"])
+
+        header = ctk.CTkFrame(modal, fg_color="transparent")
+        header.pack(fill="x", padx=16, pady=(12, 8))
+        ctk.CTkLabel(header, text=UI_TEXT.get("compare_title", "Comparar Modelos"), font=self._font("main_title", weight="bold"), text_color=self.text_primary).pack(side="left")
+
+        scroll = ctk.CTkScrollableFrame(modal, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=16, pady=(0, 12))
+
+        cols = len(self.comparison_models)
+        for ci, col in enumerate(scroll.winfo_children()):
+            col.destroy()
+
+        table = ctk.CTkFrame(scroll, fg_color="transparent")
+        table.pack(fill="x")
+        for i in range(cols + 1):
+            table.grid_columnconfigure(i, weight=1 if i > 0 else 0, minsize=100)
+
+        fields = [
+            ("", lambda m: ""),
+            (UI_TEXT.get("compare_header_model", "Modelo"), lambda m: m.get("name", "")),
+            (UI_TEXT.get("compare_header_status", "Estado"), lambda m: m.get("status_label", "")),
+            (UI_TEXT.get("compare_header_vram", "VRAM"), lambda m: f"{m.get('vram_q4', 0)} GB"),
+            (UI_TEXT.get("compare_header_ram", "RAM"), lambda m: f"{m.get('ram_q4', 0)} GB"),
+            (UI_TEXT.get("compare_header_speed", "Velocidad"), lambda m: self._get_speed_str(m)),
+        ]
+
+        for ri, (label, getter) in enumerate(fields):
+            lbl = ctk.CTkLabel(table, text=label, font=self._font("sidebar_text_small", weight="bold") if ri > 0 else self._font("action"), text_color=self.text_muted if ri > 0 else "transparent", anchor="w", width=80)
+            lbl.grid(row=ri, column=0, sticky="w", padx=(0, 8), pady=4)
+            for ci, model in enumerate(self.comparison_models):
+                val = getter(model)
+                if ri == 0:
+                    ctk.CTkLabel(table, text="", height=2).grid(row=ri, column=ci + 1, sticky="ew", pady=2)
+                elif ri == 2:
+                    color = model.get("color", self.text_primary)
+                    ctk.CTkLabel(table, text=val.upper(), font=self._font("action", weight="bold"), text_color=color, anchor="center").grid(row=ri, column=ci + 1, sticky="ew", pady=4)
+                else:
+                    ctk.CTkLabel(table, text=val, font=self._font("sidebar_text"), text_color=self.text_primary, anchor="center").grid(row=ri, column=ci + 1, sticky="ew", pady=4)
+
+    def _get_speed_str(self, model):
+        if self.specs is None:
+            return "-"
+        if model.get("category") == config.MODEL_TEXT.get("image_category", "Image Generation"):
+            return "-"
+        from src.models import estimate_tokens_per_sec
+        info = estimate_tokens_per_sec(model.get("vram_q4", 0), self.specs)
+        return f"~{info['tps']} tok/s ({info['backend']})"
+
+
+    def _startup_sequence(self):
+        """Runs after the window has rendered its first frame."""
+        if self.is_closing:
+            return
+        self.load_cached_snapshot()
+        self.refresh_installed_ollama_models()
+        self._schedule_ollama_poll()
+        self._auto_update_catalog_background()
+        self._check_first_run()
+
+    def _auto_update_catalog_background(self):
+        old_ids = {m.get("id") for m in self.rated_models}
+
+        def worker():
+            if self.is_closing:
+                return
+            try:
+                from src.updater import auto_update_catalog_if_stale
+                result = auto_update_catalog_if_stale()
+                if result.get("success") and not result.get("skipped") and result.get("added", 0) > 0:
+                    if self.specs is not None:
+                        rated_models, online_mode = self.evaluate_compatibility_with_local()
+                        self._store_compatibility_results(rated_models, online_mode)
+                        new_ids = {m.get("id") for m in self.rated_models} - old_ids
+                        self._new_models_pending = [
+                            m for m in self.rated_models
+                            if m.get("id") in new_ids and m.get("status") != "TOO_HEAVY"
+                        ]
+                        self.call_in_ui_thread(self._show_new_models_banner)
+            except Exception:
+                pass
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _show_new_models_banner(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        new_models = self._new_models_pending
+        if not new_models:
+            return
+        if not hasattr(self, "new_models_frame") or self.new_models_frame is None:
+            import customtkinter as ctk
+            self.new_models_frame = ctk.CTkFrame(
+                self.main_container,
+                fg_color="#1E3A5F",
+                border_color="#3B82F6",
+                border_width=1,
+                corner_radius=8,
+            )
+            self.new_models_frame.grid(row=0, column=0, sticky="ew", padx=0, pady=(0, 6), before=self.header_frame)
+            self.main_container.grid_rowconfigure(0, weight=0)
+
+            lang = self.active_language
+            count = len(new_models)
+            if lang == "es":
+                banner_text = f"🆕 {count} modelo(s) nuevo(s) compatible(s) encontrado(s)!"
+            else:
+                banner_text = f"🆕 {count} new compatible model(s) found!"
+
+            lbl = ctk.CTkLabel(
+                self.new_models_frame,
+                text=banner_text,
+                font=self._font("sidebar_text", weight="bold"),
+                text_color="#93C5FD",
+            )
+            lbl.pack(side="left", padx=12, pady=8)
+
+            def dismiss():
+                if self.new_models_frame:
+                    self.new_models_frame.destroy()
+                    self.new_models_frame = None
+                    self._new_models_pending = []
+            btn = ctk.CTkButton(
+                self.new_models_frame,
+                text="✕",
+                font=self._font("action"),
+                fg_color="transparent",
+                hover_color="#2563EB",
+                text_color="#93C5FD",
+                width=28,
+                height=28,
+                command=dismiss,
+            )
+            btn.pack(side="right", padx=8, pady=8)
+
+            names = ", ".join(m.get("name", "") for m in new_models[:3])
+            if len(new_models) > 3:
+                names += f" +{len(new_models) - 3}"
+            detail_lbl = ctk.CTkLabel(
+                self.new_models_frame,
+                text=names,
+                font=self._font("sidebar_text_small"),
+                text_color="#BFDBFE",
+            )
+            detail_lbl.pack(side="left", padx=(0, 8), pady=8)
+
     def load_cached_snapshot(self):
+        import threading
         cached_snapshot = get_cached_snapshot()
         if cached_snapshot is None:
             self.specs = None
@@ -179,8 +442,23 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             return
 
         self.specs = cached_snapshot
-        rated_models, self.online_mode = self.evaluate_compatibility_with_local()
-        self.rated_models = self._normalize_rated_models(rated_models)
+
+        def _eval_worker():
+            if self.is_closing:
+                return
+            try:
+                rated_models, online_mode = self.evaluate_compatibility_with_local()
+            except Exception:
+                rated_models, online_mode = [], False
+            self.call_in_ui_thread(lambda: self._apply_cached_results(rated_models, online_mode))
+
+        threading.Thread(target=_eval_worker, daemon=True).start()
+
+    def _apply_cached_results(self, rated_models, online_mode):
+        """Called on main thread after background cache evaluation completes."""
+        if self.is_closing or not self.winfo_exists():
+            return
+        self._store_compatibility_results(rated_models, online_mode)
         self.update_scan_results(from_cache=True)
 
     def set_idle_state(self):
@@ -287,12 +565,10 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                 on_background_done=self._on_background_snapshot,
             )
             rated_models, self.online_mode = self.evaluate_compatibility_with_local()
-            self.rated_models = self._normalize_rated_models(rated_models)
-            if not self.is_closing and self.winfo_exists():
-                self.after(0, self.update_scan_results)
+            self._store_compatibility_results(rated_models, self.online_mode)
+            self.call_in_ui_thread(self.update_scan_results)
         except Exception as err:
-            if not self.is_closing and self.winfo_exists():
-                self.after(0, lambda: self.show_scan_error(err))
+            self.call_in_ui_thread(lambda: self.show_scan_error(err))
 
     def on_ollama_status_click(self):
         if self.is_closing:
@@ -313,10 +589,221 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         def worker():
             from src.updater import update_models_catalog
             res = update_models_catalog()
-            if not self.is_closing and self.winfo_exists():
-                self.after(0, lambda: self._on_catalog_update_done(res))
+            self.call_in_ui_thread(lambda: self._on_catalog_update_done(res))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _check_first_run(self):
+        import os
+        flag_path = os.path.join(config.CURRENT_DIR, "data", ".first_run_done")
+        if not os.path.exists(flag_path):
+            self.after(500, self.show_first_time_wizard)
+
+    def show_first_time_wizard(self):
+        if self.is_closing or not self.winfo_exists():
+            return
+        import customtkinter as ctk
+        import os
+
+        self.wizard_step = 1
+        self.wizard_use_case = "chat"
+        self.wizard_space = "medium"
+
+        modal = ctk.CTkToplevel(self)
+        modal.title(UI_TEXT.get("wizard_title", "Bienvenido"))
+        modal_width = min(440, max(380, self.winfo_screenwidth() - 420))
+        modal_height = min(420, max(360, self.winfo_screenheight() - 320))
+        modal.geometry(f"{modal_width}x{modal_height}")
+        modal.minsize(380, 360)
+        modal.resizable(True, True)
+        modal.transient(self)
+        modal.grab_set()
+        modal.configure(fg_color=UI_COLORS["background"])
+
+        modal.grid_rowconfigure(0, weight=1)
+        modal.grid_columnconfigure(0, weight=1)
+
+        content = ctk.CTkFrame(modal, fg_color=self.card_color, border_color=self.border_color, border_width=1, corner_radius=22)
+        content.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        content.grid_rowconfigure(1, weight=1)
+        content.grid_columnconfigure(0, weight=1)
+
+        title_lbl = ctk.CTkLabel(content, text="", font=self._font("model_name", weight="bold"), text_color=self.text_primary, anchor="w", justify="left")
+        title_lbl.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 0))
+        title_lbl.configure(wraplength=modal_width - 28)
+
+        body_frame = ctk.CTkScrollableFrame(content, fg_color="transparent", border_width=0, corner_radius=0)
+        body_frame.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 6))
+        body_frame.grid_columnconfigure(0, weight=1)
+        body_frame.grid_rowconfigure(0, weight=1)
+        body_frame.grid_rowconfigure(2, weight=1)
+
+        nav_frame = ctk.CTkFrame(content, fg_color="transparent")
+        nav_frame.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 6))
+        nav_frame.grid_columnconfigure(0, weight=1)
+        nav_frame.grid_columnconfigure(1, weight=1)
+
+        btn_back = ctk.CTkButton(nav_frame, text=UI_TEXT.get("wizard_back", "Atras"), font=self._font("action"), fg_color=UI_COLORS["button_secondary"], hover_color=UI_COLORS["button_secondary_hover"], text_color=self.text_primary, height=32, command=lambda: None)
+        btn_back.grid(row=0, column=0, sticky="w")
+
+        btn_next = ctk.CTkButton(nav_frame, text=UI_TEXT.get("wizard_next", "Siguiente"), font=self._font("action", weight="bold"), fg_color=UI_COLORS["button_blue"], hover_color=UI_COLORS["button_blue_hover"], text_color=UI_COLORS["white"], height=32, width=120, command=lambda: None)
+        btn_next.grid(row=0, column=1, sticky="e")
+
+        selected_lbl = ctk.CTkLabel(content, text="", font=self._font("sidebar_text_small", slant="italic"), text_color=self.text_muted)
+        selected_lbl.grid(row=3, column=0, sticky="w", padx=12, pady=(0, 6))
+
+        def clear_body():
+            for widget in body_frame.winfo_children():
+                widget.destroy()
+
+        def build_use_case_cards():
+            clear_body()
+            use_case_keys = [key for key in config.WIZARD_USE_CASE_KEYS if key in config.USE_CASES]
+            cards_shell = ctk.CTkFrame(body_frame, fg_color="transparent")
+            cards_shell.grid(row=1, column=0, sticky="nsew")
+            cards_shell.grid_columnconfigure(0, weight=1)
+            cards_shell.grid_rowconfigure(0, weight=1)
+            cards_shell.grid_rowconfigure(2, weight=1)
+            cards_frame = ctk.CTkFrame(cards_shell, fg_color="transparent")
+            cards_frame.grid(row=1, column=0, sticky="ew")
+            cards_frame.grid_columnconfigure(0, weight=1)
+            columns = 1
+            for index, key in enumerate(use_case_keys):
+                meta = config.USE_CASES.get(key, {})
+                icon = meta.get("icon", "")
+                label = meta.get(f"label_{self.active_language}", meta.get("label_es", key))
+                is_selected = key == self.wizard_use_case
+                btn = ctk.CTkButton(
+                    cards_frame,
+                    text=f"{icon}  {label}",
+                    font=self._font("sidebar_text_small", weight="bold"),
+                    fg_color=UI_COLORS["hover"] if is_selected else "#1A2332",
+                    hover_color="#2563EB",
+                    border_color=UI_COLORS["hover"] if is_selected else "#334155",
+                    border_width=2,
+                    text_color=UI_COLORS["white"],
+                    height=36,
+                    corner_radius=14,
+                    command=lambda k=key: select_uc(k),
+                )
+                btn.grid(row=index, column=0, sticky="ew", pady=3)
+            selected_lbl.configure(text="")
+
+        def show_step(step):
+            clear_body()
+            self.wizard_step = step
+
+            if step == 1:
+                title_lbl.configure(text=UI_TEXT.get("wizard_step1_title", "¿Que quieres hacer?"), wraplength=modal_width - 28)
+                btn_back.configure(state="disabled")
+                btn_next.configure(text=UI_TEXT.get("wizard_next", "Siguiente"), state="normal", command=lambda: show_step(2))
+                build_use_case_cards()
+
+            elif step == 2:
+                title_lbl.configure(text=UI_TEXT.get("wizard_step2_title", "¿Cuanto espacio puedes dedicar?"), wraplength=modal_width - 28)
+                btn_back.configure(state="normal", command=lambda: show_step(1))
+                btn_next.configure(text=UI_TEXT.get("wizard_next", "Siguiente"), state="normal", command=lambda: show_step(3))
+                space_shell = ctk.CTkFrame(body_frame, fg_color="transparent")
+                space_shell.grid(row=1, column=0, sticky="nsew")
+                space_shell.grid_columnconfigure(0, weight=1)
+                space_shell.grid_rowconfigure(0, weight=1)
+                space_shell.grid_rowconfigure(2, weight=1)
+                space_cards_frame = ctk.CTkFrame(space_shell, fg_color="transparent")
+                space_cards_frame.grid(row=1, column=0, sticky="ew")
+                space_cards_frame.grid_columnconfigure(0, weight=1)
+                spaces = [
+                    (
+                        "small",
+                        "📦",
+                        UI_TEXT.get("wizard_space_small", "Poco (< 10 GB)"),
+                        UI_TEXT.get("wizard_space_small_desc", "Ideal para modelos de 1-3B"),
+                    ),
+                    (
+                        "medium",
+                        "📂",
+                        UI_TEXT.get("wizard_space_medium", "Medio (10-30 GB)"),
+                        UI_TEXT.get("wizard_space_medium_desc", "Perfecto para modelos de 7-14B"),
+                    ),
+                    (
+                        "large",
+                        "🗄️",
+                        UI_TEXT.get("wizard_space_large", "Mucho (> 30 GB)"),
+                        UI_TEXT.get("wizard_space_large_desc", "Modelos grandes de 32B+"),
+                    ),
+                ]
+                for row, (key, icon, label, desc) in enumerate(spaces):
+                    option_frame = ctk.CTkFrame(space_cards_frame, fg_color="transparent")
+                    option_frame.grid(row=row, column=0, sticky="ew", pady=(0, 4))
+                    option_frame.grid_columnconfigure(0, weight=1)
+                    is_selected = key == self.wizard_space
+                    btn = ctk.CTkButton(
+                        option_frame,
+                        text=f"{icon}  {label}",
+                        font=self._font("sidebar_text_small", weight="bold"),
+                        fg_color=UI_COLORS["hover"] if is_selected else "#1A2332",
+                        hover_color="#2563EB",
+                        border_color=UI_COLORS["hover"] if is_selected else "#334155",
+                        border_width=2,
+                        text_color=UI_COLORS["white"],
+                        height=36,
+                        corner_radius=14,
+                        command=lambda k=key: select_sp(k),
+                    )
+                    btn.grid(row=0, column=0, sticky="ew")
+                    desc_lbl = ctk.CTkLabel(option_frame, text=desc, font=self._font("sidebar_text_small"), text_color=self.text_muted)
+                    desc_lbl.grid(row=1, column=0, sticky="w", padx=16, pady=(1, 0))
+                selected_lbl.configure(text="")
+
+            elif step == 3:
+                title_lbl.configure(text=UI_TEXT.get("wizard_step3_title", "Estos son tus modelos recomendados"), wraplength=modal_width - 28)
+                btn_back.configure(state="normal", command=lambda: show_step(2))
+                btn_next.configure(text=UI_TEXT.get("wizard_finish", "Listo!"), state="normal", command=lambda: finish_wizard())
+                uc_label = config.USE_CASES.get(self.wizard_use_case, {}).get(f"label_{self.active_language}", self.wizard_use_case)
+                selected_lbl.configure(text=f"Uso: {uc_label}")
+                space_map = {"small": 4.0, "medium": 16.0, "large": 40.0}
+                max_vram = space_map.get(self.wizard_space, 16.0)
+                suggestions = [m for m in self.rated_models if m.get("status") in ("RUNS_GREAT", "RUNS_WELL") and m.get("vram_q4", 0) <= max_vram]
+                if self.wizard_use_case != "all":
+                    suggestions = [m for m in suggestions if self.wizard_use_case in m.get("use_cases", [])]
+                if not suggestions:
+                    suggestions = [m for m in self.rated_models if m.get("status") in ("RUNS_GREAT", "RUNS_WELL")]
+                suggestions = suggestions[:5]
+                for m in suggestions:
+                    row = ctk.CTkFrame(body_frame, fg_color=UI_COLORS["card"], corner_radius=8, border_color=self.border_color, border_width=1)
+                    row.pack(fill="x", pady=3, padx=4)
+                    ctk.CTkLabel(row, text=m["name"], font=self._font("model_name", weight="bold"), text_color=self.text_primary, anchor="w").pack(side="left", padx=10, pady=6)
+                    badge = ctk.CTkLabel(row, text=m["status_label"], font=self._font("action", weight="bold"), fg_color=m["color"], text_color=UI_COLORS["white"], corner_radius=6, height=22)
+                    badge.pack(side="right", padx=10, pady=6)
+                    speed_info = estimate_tokens_per_sec(m["vram_q4"], self.specs) if self.specs else {"tps": 0, "backend": "?"}
+                    speed_text = f"~{speed_info['tps']} tok/s"
+                    ctk.CTkLabel(row, text=speed_text, font=self._font("sidebar_text_small"), text_color=self.text_muted).pack(side="right", padx=(0, 8), pady=6)
+                if not suggestions:
+                    ctk.CTkLabel(body_frame, text=UI_TEXT.get("wizard_no_suggestions", "Analiza tu equipo primero para ver recomendaciones personalizadas."), font=self._font("model_desc"), text_color=self.text_muted, wraplength=400).grid(row=0, column=0, sticky="ew", pady=20)
+
+        def select_uc(key):
+            self.wizard_use_case = key
+            show_step(1)
+
+        def select_sp(key):
+            self.wizard_space = key
+            show_step(2)
+
+        def finish_wizard():
+            flag_path = os.path.join(config.CURRENT_DIR, "data", ".first_run_done")
+            try:
+                with open(flag_path, "w") as f:
+                    f.write("done")
+            except Exception:
+                pass
+            self.active_use_case = self.wizard_use_case
+            if hasattr(self, "use_case_buttons") and self.wizard_use_case in self.use_case_buttons:
+                for k, btn in self.use_case_buttons.items():
+                    btn.configure(fg_color=UI_COLORS["hover"] if k == self.wizard_use_case else UI_COLORS["button_secondary"])
+            self.apply_filter()
+            modal.destroy()
+
+        from src.models import estimate_tokens_per_sec
+        show_step(1)
 
     def _on_catalog_update_done(self, res):
         if self.is_closing or not self.winfo_exists():
@@ -328,7 +815,7 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             # Re-evaluate with the new models if hardware specs have been detected
             if self.specs is not None:
                 rated_models, self.online_mode = self.evaluate_compatibility_with_local()
-                self.rated_models = self._normalize_rated_models(rated_models)
+                self._store_compatibility_results(rated_models, self.online_mode)
                 self.render_models_list()
 
             title = UI_TEXT.get("catalog_update_success_title", "Catálogo Actualizado")
@@ -349,14 +836,14 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
     def _on_background_snapshot(self, snapshot):
         if self.is_closing or not self.winfo_exists():
             return
-        self.after(0, lambda snap=snapshot: self._apply_background_snapshot(snap))
+        self.call_in_ui_thread(lambda snap=snapshot: self._apply_background_snapshot(snap))
 
     def _apply_background_snapshot(self, snapshot):
         if self.is_closing or not self.winfo_exists():
             return
         self.specs = snapshot
         rated_models, self.online_mode = self.evaluate_compatibility_with_local()
-        self.rated_models = self._normalize_rated_models(rated_models)
+        self._store_compatibility_results(rated_models, self.online_mode)
         self.update_scan_results()
 
     def on_close(self):
@@ -376,6 +863,15 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
         if hasattr(self, "destroy_job") and self.destroy_job is not None:
             self.after_cancel(self.destroy_job)
             self.destroy_job = None
+        if self._ui_queue_job is not None:
+            self.after_cancel(self._ui_queue_job)
+            self._ui_queue_job = None
+        if hasattr(self, "_ollama_poll_job") and self._ollama_poll_job is not None:
+            try:
+                self.after_cancel(self._ollama_poll_job)
+            except Exception:
+                pass
+            self._ollama_poll_job = None
         self.pending_models = []
         try:
             self.quit()
@@ -385,8 +881,18 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             self.destroy()
         except tk.TclError:
             pass
-        # Force terminate the process immediately to avoid hanging on background ThreadPoolExecutor or WMI threads
-        os._exit(0)
+
+    def _schedule_ollama_poll(self):
+        """Re-check Ollama status every 30 s so the indicator auto-updates."""
+        if self.is_closing:
+            return
+        self._ollama_poll_job = self.after(30_000, self._run_ollama_poll)
+
+    def _run_ollama_poll(self):
+        if self.is_closing:
+            return
+        self.refresh_installed_ollama_models()
+        self._schedule_ollama_poll()
 
     def refresh_installed_ollama_models(self):
         import threading
@@ -397,16 +903,14 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
             else:
                 models = []
             
-            # Update GUI safely in main thread
-            if not self.is_closing:
-                try:
-                    self.after(0, lambda o=online, m=models: self._update_ollama_status_gui(o, m))
-                except Exception:
-                    pass
+            self.call_in_ui_thread(lambda o=online, m=models: self._update_ollama_status_gui(o, m))
             
         threading.Thread(target=worker, daemon=True).start()
 
     def _update_ollama_status_gui(self, online, models):
+        ollama_signature = self._build_ollama_signature(online, models)
+        ollama_changed = ollama_signature != self._last_ollama_signature
+        self._last_ollama_signature = ollama_signature
         self.ollama_api_online = online
         self.installed_ollama_models = models
         if hasattr(self, "db_status_dot"):
@@ -417,14 +921,13 @@ class App(AppLayoutMixin, AppActionsMixin, AppTextMixin, ctk.CTk):
                 self.ollama_status_dot.configure(text_color=dot_color)
                 self.ollama_status_label.configure(text=label_text)
                 
-        # Re-evaluate models locally since list of installed models changed
-        if self.specs is not None:
+        # Re-evaluate only when Ollama availability or the installed model set changed.
+        if self.specs is not None and ollama_changed:
             rated_models, self.online_mode = self.evaluate_compatibility_with_local()
-            self.rated_models = self._normalize_rated_models(rated_models)
-        
-        # Redraw model rows to update buttons and badges!
-        if hasattr(self, "scroll_frame"):
-            self.render_models_list()
+            compatibility_changed = self._store_compatibility_results(rated_models, self.online_mode)
+            if compatibility_changed and hasattr(self, "scroll_frame"):
+                self.render_models_list()
+
 
 
 if __name__ == "__main__":

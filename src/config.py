@@ -79,6 +79,21 @@ ONLINE_MODELS_URL = _get_str(
 ONLINE_MODELS_TIMEOUT_SECONDS = _get_int("ONLINE_MODELS_TIMEOUT_SECONDS", 3)
 COMMAND_TIMEOUT_SECONDS = _get_int("COMMAND_TIMEOUT_SECONDS", 8)
 MODELS_DEBUG_LOGS = _get_bool("AI_CHECKER_DEBUG_LOGS", False)
+CATALOG_AUTO_UPDATE_HOURS = _get_int("CATALOG_AUTO_UPDATE_HOURS", 24)
+
+USE_CASES = {
+    "all":          {"label_es": "Todo",          "label_en": "All",          "icon": "🔍"},
+    "chat":         {"label_es": "Chat General",  "label_en": "General Chat", "icon": "💬"},
+    "code":         {"label_es": "Codigo",        "label_en": "Code",         "icon": "💻"},
+    "writing":      {"label_es": "Escritura",     "label_en": "Writing",      "icon": "✍️"},
+    "analysis":     {"label_es": "Analisis",      "label_en": "Analysis",     "icon": "🧠"},
+    "translation":  {"label_es": "Traduccion",    "label_en": "Translation",  "icon": "🌐"},
+    "images":       {"label_es": "Imagenes",      "label_en": "Images",       "icon": "🎨"},
+    "vision":       {"label_es": "Vision",        "label_en": "Vision",       "icon": "👁️"},
+    "rag":          {"label_es": "RAG/Busqueda",  "label_en": "RAG/Search",   "icon": "📚"},
+}
+
+WIZARD_USE_CASE_KEYS = ("chat", "code", "writing", "analysis", "translation", "images")
 
 MAC_RAM_BUFFER_GREAT = _get_float("MAC_RAM_BUFFER_GREAT", 4.0)
 MAC_RAM_BUFFER_WELL = _get_float("MAC_RAM_BUFFER_WELL", 2.0)
@@ -165,7 +180,7 @@ UI_BASE = {
         "UI_SEARCH_CATEGORIES",
         ["Todos", "Text (LLM)", "Image Generation"],
     ),
-    "render_batch_size": _get_int("UI_RENDER_BATCH_SIZE", 3),
+    "render_batch_size": _get_int("UI_RENDER_BATCH_SIZE", 10),
     "narrow_layout_breakpoint": _get_int("UI_NARROW_LAYOUT_BREAKPOINT", 1380),
     "sidebar_width": {
         "Windows": _get_int("UI_SIDEBAR_WIDTH_WINDOWS", 280),
